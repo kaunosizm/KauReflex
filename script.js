@@ -2159,15 +2159,23 @@ function setLobbyMessage(text) {
 
 
 function getDuelRoomId(data) {
-  if (Array.isArray(data)) {
-    return data[0]?.created_room_id || null;
+  if (typeof data === "string") {
+    return data;
   }
 
+  if (Array.isArray(data)) {
+    data = data[0];
+  }
+
+  if (!data) return null;
+
   return (
-    data?.created_room_id ||
-    data?.room_id ||
-    data?.id ||
-    data?.create_duel_room ||
+    data.created_room_id ||
+    data.joined_room_id ||
+    data.room_id ||
+    data.id ||
+    data.create_duel_room ||
+    data.join_duel_room ||
     null
   );
 }
