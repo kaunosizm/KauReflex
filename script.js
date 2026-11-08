@@ -1,4 +1,3 @@
-
 (() => {
 "use strict";
 
@@ -169,10 +168,12 @@ function stats() {
 function renderProfile() {
   if (!currentUser) return;
 
-  setText(
-    "profile-username",
-    username || currentUser.email?.split("@")[0] || "Kullanıcı"
-  );
+  const displayName =
+    username ||
+    currentUser.user_metadata?.username ||
+    "Kullanıcı";
+
+  setText("profile-username", displayName);
 
   setText("profile-email", maskEmail(currentUser.email));
   setText("profile-joined", formatDate(currentUser.created_at));
@@ -221,13 +222,21 @@ function renderProfile() {
   );
 }
 
+/* =========================================
+   PROFİL ARAYÜZÜ
+========================================= */
+
 function profileUI() {
   const loggedIn = !!currentUser;
   const userLabel = $("user-label");
 
+  const displayName = loggedIn
+    ? username || currentUser.user_metadata?.username || "Kullanıcı"
+    : "";
+
   if (userLabel) {
     userLabel.textContent = loggedIn
-      ? "@" + (username || currentUser.email?.split("@")[0] || "Kullanıcı")
+      ? "@" + displayName
       : "";
 
     userLabel.hidden = !loggedIn;
@@ -241,7 +250,7 @@ function profileUI() {
   setText(
     "save-description",
     loggedIn
-      ? `Merhaba ${username || "Kullanıcı"}! Testlerin hesabında saklanabilir.`
+      ? `Merhaba ${displayName}! Testlerin hesabında saklanabilir.`
       : "Rekorlarını buluta kaydetmek için giriş yap. Üye olmadan da test çözebilirsin."
   );
 
@@ -953,8 +962,7 @@ function openDialog(mode) {
     ? "Zaten hesabın var mı? Giriş yap"
     : "Hesabın yok mu? Kayıt ol";
 }
-
-/* =========================================
+   /* =========================================
    BULUT VERİLERİ
 ========================================= */
 
@@ -962,6 +970,12 @@ async function loadCloudData() {
   if (!currentUser) return;
 
   const userId = currentUser.id;
+
+  // Önce kayıt sırasında alınan kullanıcı adını kullan.
+  username =
+    currentUser.user_metadata?.username ||
+    username ||
+    "";
 
   try {
     const { data: profile, error: profileError } = await supabase
@@ -972,8 +986,14 @@ async function loadCloudData() {
 
     if (currentUser?.id !== userId) return;
 
-    if (!profileError && profile) {
-      username = profile.username || "";
+    // Veritabanındaki kullanıcı adı asıl kaynaktır.
+    if (!profileError && profile?.username) {
+      username = profile.username;
+    } else if (profileError) {
+      console.warn(
+        "Profil kullanıcı adı okunamadı:",
+        profileError
+      );
     }
 
     const { data, error } = await supabase
@@ -1086,7 +1106,7 @@ async function submitAuth() {
 
     if (authMode === "register") {
 
-      // Ön kontrol: Kullanıcı adı daha önce alınmış mı?
+      // Kullanıcı adı ön kontrolü.
       const { data: existingProfile, error: checkError } =
         await supabase
           .from("profiles")
@@ -1515,4 +1535,3 @@ async function initialize() {
 initialize();
 
 })();
-           
