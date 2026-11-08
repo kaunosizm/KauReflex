@@ -958,7 +958,19 @@ function finishAim() {
     `Süre bitti! Skorun: ${finalScore} · İsabet: ${finalHits} · Doğruluk: %${accuracy} · Ortalama tepki: ${averageReaction || "—"} ms`
   );
 
-  $("aim-start-btn").textContent = "Tekrar Oyna";
+    $("aim-start-btn").textContent = "Tekrar Oyna";
+
+  // DÜELLO SKORUNU GÖNDER
+  if (duelRoomId && currentDuelStage > 0) {
+    document.querySelectorAll(".difficulty-btn").forEach(button => {
+      button.disabled = true;
+    });
+
+    submitDuelStage(finalHits, attempts);
+    return;
+  }
+
+   
 }
 
 /* =========================================
