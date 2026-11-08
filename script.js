@@ -1835,6 +1835,286 @@ async function initialize() {
   }
 }
 
+/* =========================================
+   KAUREFLEX V5 — ARKADAŞLIK SİSTEMİ
+========================================= */
+
+async function showFriends() {
+  if (!currentUser) {
+    openDialog("login");
+    return;
+  }
+
+  stopAim();
+  stopCPS();
+
+  $("home-view").hidden = true;
+  $("profile-page").hidden = true;
+  $("social-page").hidden = false;
+
+  setActiveMenu("nav-friends");
+  closeMenu();
+
+  await loadFriendships();
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function socialMessage(text, isError = false) {
+  const el = $("duel-message");
+  if (!el) return;
+
+  el.textContent = text;
+  el.style.color = isError ? "#ff8585" : "#b9a0d8";
+}
+
+function makeSocialElement(tag, className, text) {
+  const el = document.createElement(tag);
+  if (className) el.className = className;
+  if (text !== undefined) el.textContent = text;
+  return el;
+}
+
+/* KULLANICI ARA */
+
+async function searchFriends() {
+  if (!currentUser) {
+    openDialog("login");
+    return;
+  }
+
+  const query = $("friend-search-input").value.trim();
+  const results = $("friend-search-results");
+
+  if (query.length < 3) {
+    results.replaceChildren(
+      makeSocialElement(
+        "p",
+        "social-empty",
+        "En az 3 karakter gir."
+      )
+    );
+    return;
+  }
+
+  results.textContent = "Aranıyor...";
+
+  const { data, error } = await supabase.rpc(
+    "search_profiles",
+    { p_query: query }
+  );
+
+  if (error) {
+    console.error(error);
+    results.textContent = "Arama yapılamadı: " + error.message;
+    return;
+  }
+
+  results.replaceChildren();
+
+  if (!data || !data.length) {
+    results.append(
+      makeSocialElement(
+        "p",
+        "social-empty",
+        "Kullanıcı bulunamadı."
+      )
+    );
+    return;
+  }
+
+  data.forEach(profile => {
+    const row = makeSocialElement("div", "social-user-row");
+
+    const name = makeSocialElement(
+      "strong",
+      "social-username",
+      "@" + profile.username
+    );
+
+    const button = makeSocialElement(
+      "button",
+      "button button-outline",
+      "Arkadaş Ekle"
+    );
+
+    button.type = "button";
+
+    button.addEventListener("click", async () => {
+      button.disabled = true;
+
+      const { error: requestError } = await supabase.rpc(
+        "send_friend_request",
+        { p_username: profile.username }
+      );
+
+      if (requestError) {
+        socialMessage(requestError.message, true);
+        button.disabled = false;
+        return;
+      }
+
+      button.textContent = "İstek Gönderildi";
+      socialMessage("Arkadaşlık isteği gönderildi!");
+      await loadFriendships();
+    });
+
+    row.append(name, button);
+    results.append(row);
+  });
+}
+
+/* ARKADAŞLARI VE İSTEKLERİ YÜKLE */
+
+async function loadFriendships() {
+  if (!currentUser) return;
+
+  const requestsBox = $("friend-requests");
+  const friendsBox = $("friends-list");
+
+  const { data, error } = await supabase.rpc(
+    "list_friendships"
+  );
+
+  if (error) {
+    console.error("Arkadaşlar yüklenemedi:", error);
+    socialMessage(error.message, true);
+    return;
+  }
+
+  requestsBox.replaceChildren();
+  friendsBox.replaceChildren();
+
+  const incoming = (data || []).filter(item =>
+    item.friendship_status === "pending" &&
+    item.direction === "incoming"
+  );
+
+  const outgoing = (data || []).filter(item =>
+    item.friendship_status === "pending" &&
+    item.direction === "outgoing"
+  );
+
+  const accepted = (data || []).filter(item =>
+    item.friendship_status === "accepted"
+  );
+
+  if (!incoming.length && !outgoing.length) {
+    requestsBox.append(
+      makeSocialElement(
+        "p",
+        "social-empty",
+        "Bekleyen arkadaşlık isteği yok."
+      )
+    );
+  }
+
+  incoming.forEach(item => {
+    const row = makeSocialElement("div", "social-user-row");
+
+    row.append(
+      makeSocialElement(
+        "strong",
+        "",
+        "@" + item.username
+      )
+    );
+
+    const accept = makeSocialElement(
+      "button",
+      "button button-primary",
+      "Kabul Et"
+    );
+
+    accept.type = "button";
+
+    accept.addEventListener("click", async () => {
+      accept.disabled = true;
+
+      const { error } = await supabase.rpc(
+        "respond_friend_request",
+        {
+          p_request_id: item.request_id,
+          p_accept: true
+        }
+      );
+
+      if (error) {
+        socialMessage(error.message, true);
+        accept.disabled = false;
+        return;
+      }
+
+      socialMessage("Arkadaşlık isteği kabul edildi!");
+      await loadFriendships();
+    });
+
+    row.append(accept);
+    requestsBox.append(row);
+  });
+
+  outgoing.forEach(item => {
+    requestsBox.append(
+      makeSocialElement(
+        "p",
+        "social-empty",
+        "@" + item.username + " — İstek gönderildi"
+      )
+    );
+  });
+
+  if (!accepted.length) {
+    friendsBox.append(
+      makeSocialElement(
+        "p",
+        "social-empty",
+        "Henüz arkadaşın yok."
+      )
+    );
+  }
+
+  accepted.forEach(item => {
+    friendsBox.append(
+      makeSocialElement(
+        "div",
+        "social-user-row",
+        "@" + item.username
+      )
+    );
+  });
+}
+
+/* V5 BUTONLARI */
+
+$("nav-friends").addEventListener(
+  "click",
+  showFriends
+);
+
+$("friends-btn").addEventListener(
+  "click",
+  showFriends
+);
+
+$("social-back-btn").addEventListener(
+  "click",
+  showHome
+);
+
+$("friend-search-btn").addEventListener(
+  "click",
+  searchFriends
+);
+
+$("friend-search-input").addEventListener(
+  "keydown",
+  event => {
+    if (event.key === "Enter") {
+      searchFriends();
+    }
+  }
+);
+   
 initialize();
 
 })();
