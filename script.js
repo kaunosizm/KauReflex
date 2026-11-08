@@ -296,6 +296,7 @@ function profileUI() {
 function showHome() {
   stopAim();
   stopCPS();
+   $("social-page").hidden = true;
 
   $("home-view").hidden = false;
   $("profile-page").hidden = true;
@@ -313,6 +314,7 @@ function openProfile() {
 
   stopAim();
   stopCPS();
+   $("social-page").hidden = true;
   closeMenu();
 
   $("home-view").hidden = true;
