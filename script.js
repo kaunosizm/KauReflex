@@ -2243,7 +2243,7 @@ async function joinDuelRoom() {
 
     const roomId = getDuelRoomId(data);
 
-    if (!roomId) {
+    if (!roomId || typeof roomId !== "string") {
       throw new Error("Oda kimliği alınamadı.");
     }
 
