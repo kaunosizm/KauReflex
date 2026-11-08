@@ -2157,7 +2157,21 @@ function setLobbyMessage(text) {
   setText("lobby-status", text);
 }
 
+
 function getDuelRoomId(data) {
+  if (Array.isArray(data)) {
+    return data[0]?.created_room_id || null;
+  }
+
+  return (
+    data?.created_room_id ||
+    data?.room_id ||
+    data?.id ||
+    data?.create_duel_room ||
+    null
+  );
+}
+   
   if (typeof data === "string") return data;
   if (Array.isArray(data)) data = data[0];
 
@@ -2181,6 +2195,9 @@ async function createDuelRoom() {
     if (error) throw error;
 
     const roomId = getDuelRoomId(data);
+     if (Array.isArray(data) && data[0]?.room_code) {
+  $("duel-room-code").textContent = data[0].room_code;
+     }
 
     if (!roomId) {
       throw new Error("Oda kimliği alınamadı.");
