@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="tr">
 <head>
@@ -51,6 +52,12 @@
       <span>Profilim</span>
     </button>
 
+    <button class="menu-link" id="nav-friends" type="button">
+      <span class="menu-icon">♧</span>
+      <span>Arkadaşlar</span>
+      <span class="menu-new">V5</span>
+    </button>
+
     <div class="side-menu-footer">
       <span>KAUREFLEX</span>
       <small>REFLEX TRAINING PLATFORM</small>
@@ -74,10 +81,26 @@
 
     <nav class="account-actions" aria-label="Hesap işlemleri">
       <span id="user-label" class="user-label" hidden></span>
-      <button class="button button-ghost" id="login-btn">Giriş Yap</button>
-      <button class="button button-primary small" id="register-btn">Kayıt Ol</button>
-      <button class="button button-ghost" id="profile-btn" hidden>Profilim</button>
-      <button class="button button-ghost" id="logout-btn" hidden>Çıkış</button>
+
+      <button class="button button-ghost" id="login-btn">
+        Giriş Yap
+      </button>
+
+      <button class="button button-primary small" id="register-btn">
+        Kayıt Ol
+      </button>
+
+      <button class="button button-ghost" id="friends-btn" hidden>
+        ♧ Arkadaşlar
+      </button>
+
+      <button class="button button-ghost" id="profile-btn" hidden>
+        Profilim
+      </button>
+
+      <button class="button button-ghost" id="logout-btn" hidden>
+        Çıkış
+      </button>
     </nav>
   </header>
 
@@ -91,8 +114,10 @@
           <span class="pulse-dot"></span>
           REFLEKS VE PERFORMANS MERKEZİ
         </p>
+
         <h1>KauReflex</h1>
         <h2>Refleksini Geliştir</h2>
+
         <p class="intro">
           Tepki hızını ölç, hedeflerini vur ve performansını geliştir.
         </p>
@@ -107,6 +132,7 @@
               <p class="eyebrow">HAZIR MISIN?</p>
               <h3 id="test-title">5 turluk refleks testi</h3>
             </div>
+
             <div class="round-counter" id="round-counter">0 / 5</div>
           </div>
 
@@ -122,6 +148,7 @@
             <button id="start-btn" class="button button-primary start-button">
               Teste Başla
             </button>
+
             <p class="keyboard-hint">
               Klavyeden <kbd>SPACE</kbd> tuşunu da kullanabilirsin.
             </p>
@@ -154,6 +181,7 @@
 
         <section class="save-card">
           <div class="save-symbol">✧</div>
+
           <div>
             <h3>Rekorunu sakla</h3>
             <p id="save-description">
@@ -161,6 +189,7 @@
               Üye olmadan da test çözebilirsin.
             </p>
           </div>
+
           <button id="save-btn" class="button button-outline" disabled>
             Rekoru Kaydet
           </button>
@@ -172,6 +201,7 @@
               <p class="eyebrow">PERFORMANS TAKİBİ</p>
               <h3>Deneme geçmişi</h3>
             </div>
+
             <button id="clear-history-btn" class="text-button">
               Geçmişi temizle
             </button>
@@ -183,10 +213,12 @@
             </p>
           </div>
         </section>
+
       </div>
 
       <!-- AIM LABORATUVARI -->
       <section id="aim-view" class="aim-view" hidden>
+
         <div class="section-heading">
           <div>
             <p class="eyebrow">KAUREFLEX TRAINING</p>
@@ -198,12 +230,12 @@
         </div>
 
         <section class="aim-card">
-
           <div class="aim-heading">
             <div>
               <p class="eyebrow">OYUN MODU</p>
               <h3>Zorluk Seviyesi</h3>
             </div>
+
             <span class="aim-duration">30 SANİYE</span>
           </div>
 
@@ -270,6 +302,7 @@
 
         <section class="aim-info">
           <div class="save-symbol">✦</div>
+
           <div>
             <h3>Aim Laboratuvarı nasıl oynanır?</h3>
             <p>
@@ -278,8 +311,10 @@
             </p>
           </div>
         </section>
+
       </section>
-            <!-- CPS ÖLÇER -->
+
+      <!-- CPS ÖLÇER -->
       <section id="cps-view" class="cps-view" hidden>
 
         <div class="cps-heading">
@@ -349,7 +384,6 @@
         </section>
 
         <section class="cps-results">
-
           <article class="stat-card">
             <span class="stat-label">TOPLAM TIKLAMA</span>
             <strong id="cps-result-clicks">—</strong>
@@ -364,11 +398,11 @@
             <span class="stat-label">KİŞİSEL REKOR</span>
             <strong id="cps-result-best">—</strong>
           </article>
-
         </section>
 
         <section class="aim-info cps-info">
           <div class="save-symbol">✦</div>
+
           <div>
             <h3>CPS Ölçer nasıl oynanır?</h3>
             <p>
@@ -399,15 +433,30 @@
 
       <div class="profile-card">
         <div class="profile-avatar">K</div>
+
         <h2 id="profile-username">Kullanıcı</h2>
         <p id="profile-email" class="profile-email">e-posta</p>
+
+        <!-- V5 XP VE LEVEL -->
+        <div class="profile-level">
+          <div class="profile-level-heading">
+            <strong id="profile-level">SEVİYE 1</strong>
+            <span id="profile-xp">0 XP</span>
+          </div>
+
+          <div class="profile-xp-track">
+            <div id="profile-xp-fill" class="profile-xp-fill" style="width:0%"></div>
+          </div>
+
+          <small id="profile-xp-next">Sonraki seviyeye ilerle!</small>
+        </div>
+
         <p class="profile-joined">
           Üyelik tarihi: <span id="profile-joined">—</span>
         </p>
       </div>
 
       <div class="profile-stats">
-
         <article class="stat-card">
           <span class="stat-label">EN İYİ ORTALAMA</span>
           <strong id="profile-best-average">—</strong>
@@ -431,7 +480,6 @@
           <strong id="profile-test-count">0</strong>
           <small>test</small>
         </article>
-
       </div>
 
       <p id="profile-note" class="status-message"></p>
@@ -444,8 +492,193 @@
 
     </section>
 
+    <!-- V5 ARKADAŞLAR VE DÜELLO SAYFASI -->
+    <section id="social-page" class="social-page" hidden>
+
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">KAUREFLEX MULTIPLAYER</p>
+          <h3>Arkadaşlar</h3>
+          <p class="intro">
+            Arkadaşlarınla yarış, refleksini kanıtla.
+          </p>
+        </div>
+
+        <button id="social-back-btn" class="button button-outline">
+          ← Ana Sayfa
+        </button>
+      </div>
+
+      <!-- ARKADAŞ ARA -->
+      <section class="social-card">
+        <h3>Arkadaş Bul</h3>
+        <p>Kullanıcı adıyla arkadaşlarını bul.</p>
+
+        <div class="social-search">
+          <input
+            id="friend-search-input"
+            type="text"
+            maxlength="24"
+            placeholder="Kullanıcı adı"
+            autocomplete="off"
+          >
+
+          <button
+            id="friend-search-btn"
+            class="button button-primary"
+            type="button"
+          >
+            Ara
+          </button>
+        </div>
+
+        <div id="friend-search-results">
+          <p class="social-empty">
+            Arama sonuçları burada görünecek.
+          </p>
+        </div>
+      </section>
+
+      <!-- GELEN İSTEKLER -->
+      <section class="social-card">
+        <h3>Arkadaşlık İstekleri</h3>
+
+        <div id="friend-requests">
+          <p class="social-empty">
+            Bekleyen istek bulunmuyor.
+          </p>
+        </div>
+      </section>
+
+      <!-- ARKADAŞ LİSTESİ -->
+      <section class="social-card">
+        <h3>Arkadaşlarım</h3>
+
+        <div id="friends-list">
+          <p class="social-empty">
+            Henüz arkadaşın yok.
+          </p>
+        </div>
+      </section>
+
+      <!-- AIMLAB DÜELLOSU -->
+      <section class="duel-card">
+
+        <p class="eyebrow">KAUREFLEX ARENA</p>
+
+        <h2>AimLab Düellosu</h2>
+
+        <p>
+          En fazla 5 oyuncu. Üç aşama. Tek kazanan.
+        </p>
+
+        <div class="duel-stages">
+          <div>
+            <span>01</span>
+            <strong>KOLAY</strong>
+          </div>
+
+          <div>
+            <span>02</span>
+            <strong>ORTA</strong>
+          </div>
+
+          <div>
+            <span>03</span>
+            <strong>ZOR</strong>
+          </div>
+        </div>
+
+        <div class="duel-actions">
+          <button
+            id="create-duel-btn"
+            class="button button-primary"
+            type="button"
+          >
+            Oda Oluştur
+          </button>
+        </div>
+
+        <div class="duel-join">
+          <input
+            id="duel-code-input"
+            type="text"
+            maxlength="6"
+            placeholder="6 HANELİ ODA KODU"
+            autocomplete="off"
+          >
+
+          <button
+            id="join-duel-btn"
+            class="button button-outline"
+            type="button"
+          >
+            Odaya Katıl
+          </button>
+        </div>
+
+        <p
+          id="duel-message"
+          class="status-message"
+          role="status"
+          aria-live="polite"
+        >
+          Düelloya katılmak için bir oda oluştur veya kod gir.
+        </p>
+
+      </section>
+
+      <!-- DÜELLO LOBİSİ -->
+      <section id="duel-lobby" class="social-card" hidden>
+
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">DUEL LOBBY</p>
+            <h3>Bekleme Odası</h3>
+          </div>
+
+          <span id="duel-room-code" class="room-code">
+            ------
+          </span>
+        </div>
+
+        <p>Oyuncular (maksimum 5)</p>
+
+        <div id="duel-player-list" class="duel-player-list">
+        </div>
+
+        <p
+          id="lobby-status"
+          class="status-message"
+          role="status"
+          aria-live="polite"
+        >
+          Diğer oyuncular bekleniyor...
+        </p>
+
+        <button
+          id="start-duel-btn"
+          class="button button-primary"
+          type="button"
+          hidden
+        >
+          Düelloyu Başlat
+        </button>
+
+        <button
+          id="leave-duel-btn"
+          class="button button-ghost"
+          type="button"
+        >
+          Odadan Ayrıl
+        </button>
+
+      </section>
+
+    </section>
+
     <footer>
-      <span>KAUREFLEX <span class="footer-dot">•</span> V4</span>
+      <span>KAUREFLEX <span class="footer-dot">•</span> V5</span>
       <span>Tepki süresi cihazına ve ekranına göre değişebilir.</span>
     </footer>
 
