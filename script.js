@@ -2,7 +2,7 @@
 "use strict";
 
 /* =========================================
-   KAUREFLEX V3
+   KAUREFLEX V4
    SUPABASE
 ========================================= */
 
@@ -86,6 +86,25 @@ let aimStartedAt = 0;
 let aimReactionTimes = [];
 
 /* =========================================
+   CPS ÖLÇER
+========================================= */
+
+let cpsDuration = 5;
+let cpsClicks = 0;
+let cpsRunning = false;
+let cpsStartedAt = 0;
+let cpsTimer = null;
+let cpsClickTimes = [];
+
+let cpsBest = Number(
+  localStorage.getItem("kaureflex_cps_best") || 0
+);
+
+if (!Number.isFinite(cpsBest) || cpsBest < 0) {
+  cpsBest = 0;
+}
+
+/* =========================================
    ELEMENTLER
 ========================================= */
 
@@ -130,10 +149,10 @@ function maskEmail(email) {
   const name = parts[0];
 
   const masked = name.length <= 2
-    ? name[0] + "***"
-    : name.slice(0, 2) + "***";
+    ? name[0]
+    : name.slice(0, 2);
 
-  return masked + "@" + parts[1];
+  return masked + "***@" + parts[1];
 }
 
 /* =========================================
@@ -155,7 +174,9 @@ function stats() {
 
   setText(
     "last-stat",
-    results.length ? results[results.length - 1] : "—"
+    results.length
+      ? results[results.length - 1]
+      : "—"
   );
 
   setText("best-stat", best ?? "—");
@@ -174,7 +195,6 @@ function renderProfile() {
     "Kullanıcı";
 
   setText("profile-username", displayName);
-
   setText("profile-email", maskEmail(currentUser.email));
   setText("profile-joined", formatDate(currentUser.created_at));
 
@@ -275,6 +295,7 @@ function profileUI() {
 
 function showHome() {
   stopAim();
+  stopCPS();
 
   $("home-view").hidden = false;
   $("profile-page").hidden = true;
@@ -291,6 +312,7 @@ function openProfile() {
   }
 
   stopAim();
+  stopCPS();
   closeMenu();
 
   $("home-view").hidden = true;
@@ -303,12 +325,14 @@ function openProfile() {
 
 function showReaction() {
   stopAim();
+  stopCPS();
 
   $("home-view").hidden = false;
   $("profile-page").hidden = true;
 
   $("reaction-view").hidden = false;
   $("aim-view").hidden = true;
+  $("cps-view").hidden = true;
 
   setActiveMenu("nav-reaction");
   closeMenu();
@@ -316,18 +340,39 @@ function showReaction() {
 
 function showAim() {
   stopAim();
+  stopCPS();
 
   $("home-view").hidden = false;
   $("profile-page").hidden = true;
 
   $("reaction-view").hidden = true;
   $("aim-view").hidden = false;
+  $("cps-view").hidden = true;
 
   setActiveMenu("nav-aim");
   closeMenu();
 
   renderAimGrid();
   updateAimStats();
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function showCPS() {
+  stopAim();
+  stopCPS();
+
+  $("home-view").hidden = false;
+  $("profile-page").hidden = true;
+
+  $("reaction-view").hidden = true;
+  $("aim-view").hidden = true;
+  $("cps-view").hidden = false;
+
+  setActiveMenu("nav-cps");
+  closeMenu();
+
+  updateCPSStats();
 
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -548,6 +593,7 @@ function nextRound() {
     title.textContent = "ŞİMDİ TIKLA!";
     help.textContent = "Hemen dokun!";
     status.textContent = "ŞİMDİ!";
+
   }, 1300 + Math.random() * 2700);
 }
 
@@ -816,6 +862,7 @@ function startAim() {
     if (aimTime <= 0) {
       finishAim();
     }
+
   }, 1000);
 }
 
@@ -913,6 +960,244 @@ function finishAim() {
 }
 
 /* =========================================
+   CPS İSTATİSTİKLERİ
+========================================= */
+
+function updateCPSStats() {
+  setText("cps-clicks", cpsClicks);
+  setText("cps-time", cpsDuration.toFixed(1));
+  setText("cps-current", "0.00");
+  setText("cps-result-best", cpsBest.toFixed(2));
+}
+
+/* =========================================
+   CPS SÜRE SEÇİMİ
+========================================= */
+
+function selectCPSDuration(duration) {
+  if (cpsRunning) return;
+
+  const value = Number(duration);
+
+  if (![5, 10, 30].includes(value)) return;
+
+  cpsDuration = value;
+
+  document.querySelectorAll(".cps-duration-btn").forEach(button => {
+    button.classList.toggle(
+      "active",
+      Number(button.dataset.duration) === value
+    );
+  });
+
+  cpsClicks = 0;
+  cpsClickTimes = [];
+
+  setText("cps-clicks", "0");
+  setText("cps-time", cpsDuration.toFixed(1));
+  setText("cps-current", "0.00");
+  setText("cps-result-clicks", "—");
+  setText("cps-result-average", "—");
+  setText("cps-result-best", cpsBest.toFixed(2));
+
+  setText("cps-status", `${cpsDuration} saniyelik test seçildi.`);
+  setText("cps-click-title", "BAŞLAMAK İÇİN TIKLA");
+  setText("cps-click-help", "Teste başla ve olabildiğince hızlı tıkla!");
+}
+
+/* =========================================
+   CPS TESTİNİ BAŞLAT
+========================================= */
+
+function startCPS() {
+  if (cpsRunning) return;
+
+  clearInterval(cpsTimer);
+
+  cpsClicks = 0;
+  cpsClickTimes = [];
+  cpsStartedAt = performance.now();
+  cpsRunning = true;
+
+  const clickArea = $("cps-click-area");
+
+  clickArea.disabled = false;
+  clickArea.classList.add("running");
+
+  $("cps-start-btn").disabled = true;
+  $("cps-start-btn").textContent = "TEST DEVAM EDİYOR";
+
+  document.querySelectorAll(".cps-duration-btn").forEach(button => {
+    button.disabled = true;
+  });
+
+  setText("cps-click-title", "HIZLICA TIKLA!");
+  setText("cps-click-help", "Her tıklaman sayılır!");
+  setText("cps-status", "Test başladı! Hızını göster!");
+
+  setText("cps-clicks", "0");
+  setText("cps-time", cpsDuration.toFixed(1));
+  setText("cps-current", "0.00");
+
+  setText("cps-result-clicks", "—");
+  setText("cps-result-average", "—");
+
+  cpsTimer = setInterval(updateCPSTimer, 40);
+}
+
+/* =========================================
+   CPS TIKLAMA
+========================================= */
+
+function cpsClick() {
+  if (!cpsRunning) return;
+
+  const now = performance.now();
+  const elapsed = (now - cpsStartedAt) / 1000;
+
+  if (elapsed >= cpsDuration) {
+    finishCPS();
+    return;
+  }
+
+  cpsClicks++;
+  cpsClickTimes.push(now);
+
+  setText("cps-clicks", cpsClicks);
+
+  updateCPSLive();
+}
+
+/* =========================================
+   CPS CANLI GÖSTERGE
+========================================= */
+
+function updateCPSLive() {
+  const now = performance.now();
+
+  cpsClickTimes = cpsClickTimes.filter(
+    time => now - time <= 1000
+  );
+
+  const currentCPS = cpsClickTimes.length;
+
+  setText("cps-current", currentCPS.toFixed(2));
+}
+
+/* =========================================
+   CPS ZAMANLAYICI
+========================================= */
+
+function updateCPSTimer() {
+  if (!cpsRunning) return;
+
+  const elapsed = (performance.now() - cpsStartedAt) / 1000;
+  const remaining = Math.max(0, cpsDuration - elapsed);
+
+  setText("cps-time", remaining.toFixed(1));
+
+  updateCPSLive();
+
+  if (remaining <= 0) {
+    finishCPS();
+  }
+}
+
+/* =========================================
+   CPS TESTİNİ BİTİR
+========================================= */
+
+function finishCPS() {
+  if (!cpsRunning) return;
+
+  const actualDuration = cpsDuration;
+  const totalClicks = cpsClicks;
+  const averageCPS = totalClicks / actualDuration;
+
+  cpsRunning = false;
+
+  clearInterval(cpsTimer);
+  cpsTimer = null;
+
+  const clickArea = $("cps-click-area");
+
+  clickArea.disabled = true;
+  clickArea.classList.remove("running");
+
+  $("cps-start-btn").disabled = false;
+  $("cps-start-btn").textContent = "Tekrar Dene";
+
+  document.querySelectorAll(".cps-duration-btn").forEach(button => {
+    button.disabled = false;
+  });
+
+  if (averageCPS > cpsBest) {
+    cpsBest = averageCPS;
+
+    try {
+      localStorage.setItem(
+        "kaureflex_cps_best",
+        cpsBest.toFixed(2)
+      );
+    } catch (error) {
+      console.warn("CPS rekoru kaydedilemedi:", error);
+    }
+  }
+
+  setText("cps-clicks", totalClicks);
+  setText("cps-time", "0.0");
+  setText("cps-current", averageCPS.toFixed(2));
+
+  setText("cps-result-clicks", totalClicks);
+  setText("cps-result-average", averageCPS.toFixed(2));
+  setText("cps-result-best", cpsBest.toFixed(2));
+
+  setText("cps-click-title", "TEST TAMAMLANDI!");
+  setText(
+    "cps-click-help",
+    `${totalClicks} tıklama yaptın. Tekrar deneyebilirsin.`
+  );
+
+  setText(
+    "cps-status",
+    `Test bitti! Ortalama hızın: ${averageCPS.toFixed(2)} CPS`
+  );
+}
+
+/* =========================================
+   CPS TESTİNİ DURDUR
+========================================= */
+
+function stopCPS() {
+  clearInterval(cpsTimer);
+  cpsTimer = null;
+
+  if (!cpsRunning) return;
+
+  cpsRunning = false;
+
+  const clickArea = $("cps-click-area");
+
+  if (clickArea) {
+    clickArea.disabled = true;
+    clickArea.classList.remove("running");
+  }
+
+  if ($("cps-start-btn")) {
+    $("cps-start-btn").disabled = false;
+    $("cps-start-btn").textContent = "Teste Başla";
+  }
+
+  document.querySelectorAll(".cps-duration-btn").forEach(button => {
+    button.disabled = false;
+  });
+
+  setText("cps-click-title", "BAŞLAMAK İÇİN TIKLA");
+  setText("cps-click-help", "Teste başla ve olabildiğince hızlı tıkla!");
+  setText("cps-status", "Test durduruldu. Yeniden başlayabilirsin.");
+}
+
+/* =========================================
    GİRİŞ PENCERESİ
 ========================================= */
 
@@ -933,8 +1218,8 @@ function openDialog(mode) {
     resetting
       ? "Şifre yenile"
       : registering
-      ? "Hesap oluştur"
-      : "Giriş Yap"
+        ? "Hesap oluştur"
+        : "Giriş Yap"
   );
 
   setText(
@@ -942,8 +1227,8 @@ function openDialog(mode) {
     resetting
       ? "E-posta adresine şifre yenileme bağlantısı göndereceğiz."
       : registering
-      ? "Kullanıcı adını, e-postanı ve şifreni belirle."
-      : "Hesabına giriş yap ve rekorlarını bulutta sakla."
+        ? "Kullanıcı adını, e-postanı ve şifreni belirle."
+        : "Hesabına giriş yap ve rekorlarını bulutta sakla."
   );
 
   $("username-label").hidden = !registering;
@@ -955,14 +1240,15 @@ function openDialog(mode) {
   $("confirm-account-btn").textContent = resetting
     ? "Sıfırlama bağlantısı gönder"
     : registering
-    ? "Kayıt Ol"
-    : "Giriş Yap";
+      ? "Kayıt Ol"
+      : "Giriş Yap";
 
   $("switch-mode-btn").textContent = registering
     ? "Zaten hesabın var mı? Giriş yap"
     : "Hesabın yok mu? Kayıt ol";
 }
-   /* =========================================
+
+/* =========================================
    BULUT VERİLERİ
 ========================================= */
 
@@ -971,7 +1257,6 @@ async function loadCloudData() {
 
   const userId = currentUser.id;
 
-  // Önce kayıt sırasında alınan kullanıcı adını kullan.
   username =
     currentUser.user_metadata?.username ||
     username ||
@@ -986,7 +1271,6 @@ async function loadCloudData() {
 
     if (currentUser?.id !== userId) return;
 
-    // Veritabanındaki kullanıcı adı asıl kaynaktır.
     if (!profileError && profile?.username) {
       username = profile.username;
     } else if (profileError) {
@@ -1080,8 +1364,6 @@ async function submitAuth() {
 
   try {
 
-    /* ŞİFRE YENİLEME */
-
     if (authMode === "reset") {
       const { error } =
         await supabase.auth.resetPasswordForEmail(
@@ -1102,11 +1384,8 @@ async function submitAuth() {
       return;
     }
 
-    /* YENİ KAYIT */
-
     if (authMode === "register") {
 
-      // Kullanıcı adı ön kontrolü.
       const { data: existingProfile, error: checkError } =
         await supabase
           .from("profiles")
@@ -1142,7 +1421,6 @@ async function submitAuth() {
 
       if (error) throw error;
 
-      // E-posta doğrulaması kapalıysa oturum hemen açılır.
       if (data.user && data.session) {
         currentUser = data.user;
         username = userName;
@@ -1178,8 +1456,6 @@ async function submitAuth() {
 
       return;
     }
-
-    /* NORMAL GİRİŞ */
 
     const { data, error } =
       await supabase.auth.signInWithPassword({
@@ -1300,6 +1576,11 @@ $("nav-aim").addEventListener(
   showAim
 );
 
+$("nav-cps").addEventListener(
+  "click",
+  showCPS
+);
+
 $("nav-profile").addEventListener(
   "click",
   openProfile
@@ -1367,6 +1648,26 @@ document.querySelectorAll(".difficulty-btn").forEach(button => {
 $("aim-start-btn").addEventListener(
   "click",
   startAim
+);
+
+/* =========================================
+   CPS BUTONLARI
+========================================= */
+
+document.querySelectorAll(".cps-duration-btn").forEach(button => {
+  button.addEventListener("click", () => {
+    selectCPSDuration(button.dataset.duration);
+  });
+});
+
+$("cps-start-btn").addEventListener(
+  "click",
+  startCPS
+);
+
+$("cps-click-area").addEventListener(
+  "click",
+  cpsClick
 );
 
 /* =========================================
@@ -1446,7 +1747,9 @@ document.addEventListener("keydown", event => {
 
   if ($("account-dialog").open) return;
   if (!$("profile-page").hidden) return;
+  if ($("reaction-view").hidden) return;
   if (!$("aim-view").hidden) return;
+  if (!$("cps-view").hidden) return;
 
   const active = document.activeElement;
 
@@ -1475,7 +1778,6 @@ supabase.auth.onAuthStateChange(
 
     if (currentUser) {
 
-      // Oturum callback'ini bekletmeden verileri yükle.
       Promise.resolve().then(() => {
         if (currentUser) {
           return loadCloudData();
@@ -1505,6 +1807,7 @@ async function initialize() {
   renderHistory();
   stats();
   updateAimStats();
+  updateCPSStats();
   profileUI();
 
   try {
