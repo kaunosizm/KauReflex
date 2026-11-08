@@ -1,939 +1,1283 @@
 
 (() => {
-"use strict";
+  "use strict";
 
-/* =========================================
-   KAUREFLEX V3
-   SUPABASE AYARLARI
-========================================= */
+  /* =========================================
+     KAUREFLEX V3
+     SUPABASE
+  ========================================= */
 
-const SUPABASE_URL = "https://vqmwhzrcosxkrcxrzgeh.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_RUvdJnlkY45aJhoBymHK_g_6MZamTRt";
+  const SUPABASE_URL =
+    "https://vqmwhzrcosxkrcxrzgeh.supabase.co";
 
-const supabase = window.supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_PUBLISHABLE_KEY
-);
+  const SUPABASE_PUBLISHABLE_KEY =
+    "sb_publishable_RUvdJnlkY45aJhoBymHK_g_6MZamTRt";
 
-const $ = id => document.getElementById(id);
-const TOTAL = 5;
-
-/* =========================================
-   TEPKİ ÖLÇER DEĞİŞKENLERİ
-========================================= */
-
-let round = 0;
-let results = [];
-let phase = "idle";
-let timer = null;
-let startedAt = 0;
-
-let currentUser = null;
-let username = "";
-let best = null;
-let history = [];
-let authMode = "login";
-let saving = false;
-
-let lastSavedResult = null;
-
-/* =========================================
-   AIM LABORATUVARI DEĞİŞKENLERİ
-========================================= */
-
-const AIM_DURATION = 30;
-const AIM_CELLS = 25;
-
-const AIM_LEVELS = {
-  easy: {
-    name: "Kolay",
-    targetInterval: 1250,
-    points: 10
-  },
-  medium: {
-    name: "Orta",
-    targetInterval: 850,
-    points: 15
-  },
-  hard: {
-    name: "Zor",
-    targetInterval: 500,
-    points: 20
+  if (!window.supabase) {
+    console.error("Supabase kütüphanesi yüklenemedi.");
+    alert("Bağlantı hatası: Sayfayı yenileyip tekrar dene.");
+    return;
   }
-};
 
-let aimDifficulty = "easy";
-let aimRunning = false;
-let aimScore = 0;
-let aimHits = 0;
-let aimMisses = 0;
-let aimTime = AIM_DURATION;
-let aimTimer = null;
-let aimSpawnTimer = null;
-let aimTarget = -1;
-let aimStartedAt = 0;
-let aimReactionTimes = [];
-
-/* =========================================
-   ELEMENTLER
-========================================= */
-
-const area = $("reaction-area");
-const title = $("reaction-title");
-const help = $("reaction-help");
-const icon = $("reaction-icon");
-const status = $("status-message");
-const start = $("start-btn");
-
-/* =========================================
-   GENEL YARDIMCILAR
-========================================= */
-
-function message(text, isError = false) {
-  $("dialog-error").textContent = text;
-  $("dialog-error").style.color =
-    isError ? "#ff8585" : "#8fffc7";
-}
-
-function formatDate(date) {
-  if (!date) return "—";
-
-  return new Date(date).toLocaleDateString("tr-TR", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric"
-  });
-}
-
-function maskEmail(email) {
-  if (!email || !email.includes("@")) return "—";
-
-  const parts = email.split("@");
-  const name = parts[0];
-
-  const masked = name.length <= 2
-    ? name[0] + "***"
-    : name.slice(0, 2) + "***";
-
-  return masked + "@" + parts[1];
-}
-
-/* =========================================
-   TEPKİ İSTATİSTİKLERİ
-========================================= */
-
-function stats() {
-  $("round-counter").textContent = `${round} / ${TOTAL}`;
-
-  $("average-stat").textContent = results.length
-    ? Math.round(
-        results.reduce((a, b) => a + b, 0) / results.length
-      )
-    : "—";
-
-  $("last-stat").textContent = results.length
-    ? results[results.length - 1]
-    : "—";
-
-  $("best-stat").textContent = best ?? "—";
-}
-
-/* =========================================
-   PROFİL İSTATİSTİKLERİ
-========================================= */
-
-function renderProfile() {
-  if (!currentUser) return;
-
-  $("profile-username").textContent =
-    username || currentUser.email?.split("@")[0] || "Kullanıcı";
-
-  $("profile-email").textContent =
-    maskEmail(currentUser.email);
-
-  $("profile-joined").textContent =
-    formatDate(currentUser.created_at);
-
-  const validHistory = history.filter(item =>
-    Number.isFinite(Number(item.average_ms ?? item.average))
+  const supabase = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
   );
 
-  if (!validHistory.length) {
-    $("profile-best-average").textContent = "—";
-    $("profile-average").textContent = "—";
-    $("profile-fastest").textContent = "—";
-    $("profile-test-count").textContent = "0";
-    $("profile-note").textContent =
-      "Henüz tamamlanmış bir testin yok.";
-    return;
-  }
+  const $ = id => document.getElementById(id);
+  const TOTAL = 5;
 
-  const averages = validHistory.map(item =>
-    Number(item.average_ms ?? item.average)
-  );
+  /* =========================================
+     TEPKİ ÖLÇER DEĞİŞKENLERİ
+  ========================================= */
 
-  const fastest = validHistory
-    .map(item => Number(item.best_ms))
-    .filter(Number.isFinite);
+  let round = 0;
+  let results = [];
+  let phase = "idle";
+  let timer = null;
+  let startedAt = 0;
 
-  $("profile-best-average").textContent =
-    Math.min(...averages);
+  /* =========================================
+     HESAP DEĞİŞKENLERİ
+  ========================================= */
 
-  $("profile-average").textContent =
-    Math.round(
-      averages.reduce((a, b) => a + b, 0) / averages.length
-    );
+  let currentUser = null;
+  let username = "";
+  let best = null;
+  let history = [];
+  let authMode = "login";
+  let saving = false;
+  let lastUnsavedResult = null;
 
-  $("profile-fastest").textContent = fastest.length
-    ? Math.min(...fastest)
-    : "—";
+  /* =========================================
+     AIM LABORATUVARI
+  ========================================= */
 
-  $("profile-test-count").textContent =
-    validHistory.length;
+  const AIM_DURATION = 30;
+  const AIM_CELLS = 25;
 
-  $("profile-note").textContent =
-    "İstatistiklerin tamamlanan testlerine göre hesaplanır.";
-}
-
-function profileUI() {
-  const loggedIn = !!currentUser;
-
-  $("user-label").textContent = loggedIn
-    ? "@" + (username || currentUser.email || "Kullanıcı")
-    : "";
-
-  $("user-label").hidden = !loggedIn;
-  $("login-btn").hidden = loggedIn;
-  $("register-btn").hidden = loggedIn;
-  $("logout-btn").hidden = !loggedIn;
-  $("profile-btn").hidden = !loggedIn;
-
-  $("save-description").textContent = loggedIn
-    ? `Merhaba ${username || currentUser.email}! Testlerin hesabında bulutta saklanabilir.`
-    : "Rekorlarını buluta kaydetmek için giriş yap. Üye olmadan da test çözebilirsin.";
-
-  $("save-btn").disabled =
-    !loggedIn || !history.length;
-
-  if (loggedIn && !$("profile-page").hidden) {
-    renderProfile();
-  }
-}
-
-/* =========================================
-   SAYFA GEÇİŞLERİ
-========================================= */
-
-function showHome() {
-  $("home-view").hidden = false;
-  $("profile-page").hidden = true;
-
-  showReaction();
-
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth"
-  });
-}
-
-function openProfile() {
-  if (!currentUser) {
-    openDialog("login");
-    return;
-  }
-
-  closeMenu();
-
-  $("home-view").hidden = true;
-  $("profile-page").hidden = false;
-
-  renderProfile();
-
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth"
-  });
-}
-
-function showReaction() {
-  stopAim();
-
-  $("reaction-view").hidden = false;
-  $("aim-view").hidden = true;
-
-  setActiveMenu("nav-reaction");
-  closeMenu();
-
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth"
-  });
-}
-
-function showAim() {
-  $("reaction-view").hidden = true;
-  $("aim-view").hidden = false;
-
-  setActiveMenu("nav-aim");
-  closeMenu();
-
-  renderAimGrid();
-  updateAimStats();
-
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth"
-  });
-}
-
-/* =========================================
-   SOL MENÜ
-========================================= */
-
-function openMenu() {
-  $("side-menu").classList.add("open");
-  $("menu-overlay").hidden = false;
-
-  $("side-menu").setAttribute("aria-hidden", "false");
-  $("menu-btn").setAttribute("aria-expanded", "true");
-}
-
-function closeMenu() {
-  $("side-menu").classList.remove("open");
-  $("menu-overlay").hidden = true;
-
-  $("side-menu").setAttribute("aria-hidden", "true");
-  $("menu-btn").setAttribute("aria-expanded", "false");
-}
-
-function setActiveMenu(id) {
-  document.querySelectorAll(".menu-link").forEach(button => {
-    button.classList.toggle("active", button.id === id);
-  });
-}
-
-/* =========================================
-   DENEME GEÇMİŞİ
-========================================= */
-
-function renderHistory() {
-  const list = $("history-list");
-  list.replaceChildren();
-
-  if (!history.length) {
-    const p = document.createElement("p");
-    p.className = "empty-history";
-    p.textContent =
-      "Henüz tamamlanmış bir testin yok. İlk denemeni yap!";
-
-    list.append(p);
-    return;
-  }
-
-  history.slice(0, 10).forEach(item => {
-    const p = document.createElement("p");
-    p.className = "history-row";
-
-    const date = new Date(
-      item.created_at || item.date || Date.now()
-    ).toLocaleString("tr-TR");
-
-    p.textContent =
-      `${date} · Ortalama ${item.average_ms ?? item.average} ms`;
-
-    list.append(p);
-  });
-}
-
-/* =========================================
-   TEPKİ TESTİNİ SIFIRLA
-========================================= */
-
-function reset() {
-  clearTimeout(timer);
-
-  timer = null;
-  round = 0;
-  results = [];
-  phase = "idle";
-
-  area.className = "reaction-area ready";
-  icon.textContent = "✦";
-  title.textContent = "BAŞLAMAK İÇİN TIKLA";
-
-  help.textContent =
-    "Ekran yeşile döndüğünde olabildiğince hızlı tıkla.";
-
-  status.textContent = "Hazır olduğunda teste başla.";
-
-  start.disabled = false;
-
-  stats();
-}
-
-/* =========================================
-   BULUTA KAYIT
-========================================= */
-
-async function saveResult(average, bestRound) {
-  if (!currentUser || saving) return false;
-
-  saving = true;
-
-  try {
-    const userId = currentUser.id;
-
-    const { error } = await supabase
-      .from("reaction_results")
-      .insert({
-        user_id: userId,
-        average_ms: average,
-        best_ms: bestRound
-      });
-
-    if (error) {
-      status.textContent =
-        "Buluta kaydedilemedi: " + error.message;
-      return false;
+  const AIM_LEVELS = {
+    easy: {
+      name: "Kolay",
+      targetInterval: 1250,
+      points: 10
+    },
+    medium: {
+      name: "Orta",
+      targetInterval: 850,
+      points: 15
+    },
+    hard: {
+      name: "Zor",
+      targetInterval: 500,
+      points: 20
     }
-
-    status.textContent =
-      "Rekorun başarıyla buluta kaydedildi!";
-
-    await loadCloudData();
-
-    return true;
-
-  } catch (error) {
-    status.textContent =
-      "Kayıt hatası: " + error.message;
-
-    return false;
-
-  } finally {
-    saving = false;
-  }
-}
-
-/* =========================================
-   TEST BİTİŞİ
-========================================= */
-
-function finish() {
-  phase = "finished";
-
-  const average = Math.round(
-    results.reduce((a, b) => a + b, 0) / results.length
-  );
-
-  const bestRound = Math.min(...results);
-
-  status.textContent =
-    `Test tamamlandı! Ortalama tepki süren: ${average} ms.`;
-
-  icon.textContent = "✧";
-  title.textContent = `${average} ms`;
-
-  help.textContent =
-    "Harika! Yeniden denemek için Teste Başla'ya bas.";
-
-  area.className = "reaction-area ready";
-  start.disabled = false;
-
-  if (best === null || average < best) {
-    best = average;
-  }
-
-  const completedTest = {
-    average_ms: average,
-    best_ms: bestRound,
-    created_at: new Date().toISOString(),
-    localOnly: !currentUser
   };
 
-  history.unshift(completedTest);
-  history = history.slice(0, 20);
+  let aimDifficulty = "easy";
+  let aimRunning = false;
+  let aimScore = 0;
+  let aimHits = 0;
+  let aimMisses = 0;
+  let aimTime = AIM_DURATION;
+  let aimTimer = null;
+  let aimSpawnTimer = null;
+  let aimTarget = -1;
+  let aimStartedAt = 0;
+  let aimReactionTimes = [];
 
-  lastSavedResult = null;
+  /* =========================================
+     ELEMENTLER
+  ========================================= */
 
-  stats();
-  renderHistory();
-  profileUI();
+  const area = $("reaction-area");
+  const title = $("reaction-title");
+  const help = $("reaction-help");
+  const icon = $("reaction-icon");
+  const status = $("status-message");
+  const start = $("start-btn");
 
-  if (currentUser) {
-    lastSavedResult = completedTest.created_at;
-    saveResult(average, bestRound);
+  /* =========================================
+     GENEL FONKSİYONLAR
+  ========================================= */
+
+  function setText(id, value) {
+    const element = $(id);
+    if (element) element.textContent = value;
   }
-}
 
-/* =========================================
-   YENİ TUR
-========================================= */
+  function message(text, isError = false) {
+    const element = $("dialog-error");
 
-function nextRound() {
-  if (round >= TOTAL) {
-    finish();
-    return;
+    if (!element) return;
+
+    element.textContent = text;
+    element.style.color = isError ? "#ff8585" : "#8fffc7";
   }
 
-  round++;
-  phase = "waiting";
+  function formatDate(date) {
+    if (!date) return "—";
 
-  stats();
+    return new Date(date).toLocaleDateString("tr-TR", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric"
+    });
+  }
 
-  area.className = "reaction-area waiting";
-  icon.textContent = "…";
-  title.textContent = "BEKLE…";
+  function maskEmail(email) {
+    if (!email || !email.includes("@")) return "—";
 
-  help.textContent =
-    "Yeşil ışık yanmadan dokunma!";
+    const parts = email.split("@");
+    const name = parts[0];
 
-  status.textContent =
-    `${round}. tur · Yeşil ışığı bekle…`;
+    const masked = name.length <= 2
+      ? name[0] + "***"
+      : name.slice(0, 2) + "***";
 
-  timer = setTimeout(() => {
-    if (phase !== "waiting") return;
+    return masked + "@" + parts[1];
+  }
 
-    phase = "go";
-    startedAt = performance.now();
+  /* =========================================
+     TEPKİ İSTATİSTİKLERİ
+  ========================================= */
 
-    area.className = "reaction-area go";
-    icon.textContent = "⚡";
-    title.textContent = "ŞİMDİ TIKLA!";
-    help.textContent = "Hemen dokun!";
-    status.textContent = "ŞİMDİ!";
+  function stats() {
+    setText("round-counter", `${round} / ${TOTAL}`);
 
-  }, 1300 + Math.random() * 2700);
-}
+    setText(
+      "average-stat",
+      results.length
+        ? Math.round(
+            results.reduce((a, b) => a + b, 0) /
+            results.length
+          )
+        : "—"
+    );
 
-/* =========================================
-   TESTİ BAŞLAT
-========================================= */
+    setText(
+      "last-stat",
+      results.length ? results[results.length - 1] : "—"
+    );
 
-function begin() {
-  reset();
+    setText("best-stat", best ?? "—");
+  }
 
-  start.disabled = true;
+  /* =========================================
+     PROFİL
+  ========================================= */
 
-  nextRound();
-}
+  function renderProfile() {
+    if (!currentUser) return;
 
-/* =========================================
-   TEPKİ ALGILAMA
-========================================= */
+    setText(
+      "profile-username",
+      username || currentUser.email?.split("@")[0] || "Kullanıcı"
+    );
 
-function react() {
-  if (phase === "waiting") {
+    setText("profile-email", maskEmail(currentUser.email));
+    setText("profile-joined", formatDate(currentUser.created_at));
+
+    const validHistory = history.filter(item =>
+      Number.isFinite(Number(item.average_ms ?? item.average))
+    );
+
+    if (!validHistory.length) {
+      setText("profile-best-average", "—");
+      setText("profile-average", "—");
+      setText("profile-fastest", "—");
+      setText("profile-test-count", "0");
+      setText("profile-note", "Henüz tamamlanmış bir testin yok.");
+      return;
+    }
+
+    const averages = validHistory.map(item =>
+      Number(item.average_ms ?? item.average)
+    );
+
+    const fastest = validHistory
+      .map(item => Number(item.best_ms))
+      .filter(Number.isFinite);
+
+    setText("profile-best-average", Math.min(...averages));
+
+    setText(
+      "profile-average",
+      Math.round(
+        averages.reduce((a, b) => a + b, 0) /
+        averages.length
+      )
+    );
+
+    setText(
+      "profile-fastest",
+      fastest.length ? Math.min(...fastest) : "—"
+    );
+
+    setText("profile-test-count", validHistory.length);
+
+    setText(
+      "profile-note",
+      "İstatistiklerin tamamlanan testlerine göre hesaplanır."
+    );
+  }
+
+  function profileUI() {
+    const loggedIn = !!currentUser;
+
+    const userLabel = $("user-label");
+
+    if (userLabel) {
+      userLabel.textContent = loggedIn
+        ? "@" + (username || currentUser.email?.split("@")[0] || "Kullanıcı")
+        : "";
+
+      userLabel.hidden = !loggedIn;
+    }
+
+    if ($("login-btn")) $("login-btn").hidden = loggedIn;
+    if ($("register-btn")) $("register-btn").hidden = loggedIn;
+    if ($("logout-btn")) $("logout-btn").hidden = !loggedIn;
+    if ($("profile-btn")) $("profile-btn").hidden = !loggedIn;
+
+    setText(
+      "save-description",
+      loggedIn
+        ? `Merhaba ${username || "Kullanıcı"}! Testlerin hesabında saklanabilir.`
+        : "Rekorlarını buluta kaydetmek için giriş yap. Üye olmadan da test çözebilirsin."
+    );
+
+    const saveButton = $("save-btn");
+
+    if (saveButton) {
+      saveButton.disabled = !loggedIn || !lastUnsavedResult;
+    }
+
+    if (loggedIn && $("profile-page") && !$("profile-page").hidden) {
+      renderProfile();
+    }
+  }
+
+  /* =========================================
+     SAYFA GEÇİŞLERİ
+  ========================================= */
+
+  function showHome() {
+    stopAim();
+
+    $("home-view").hidden = false;
+    $("profile-page").hidden = true;
+
+    showReaction();
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function openProfile() {
+    if (!currentUser) {
+      openDialog("login");
+      return;
+    }
+
+    stopAim();
+    closeMenu();
+
+    $("home-view").hidden = true;
+    $("profile-page").hidden = false;
+
+    renderProfile();
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function showReaction() {
+    stopAim();
+
+    $("reaction-view").hidden = false;
+    $("aim-view").hidden = true;
+
+    setActiveMenu("nav-reaction");
+    closeMenu();
+  }
+
+  function showAim() {
+    stopAim();
+
+    $("reaction-view").hidden = true;
+    $("aim-view").hidden = false;
+
+    setActiveMenu("nav-aim");
+    closeMenu();
+
+    renderAimGrid();
+    updateAimStats();
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  /* =========================================
+     SOL MENÜ
+  ========================================= */
+
+  function openMenu() {
+    $("side-menu").classList.add("open");
+    $("menu-overlay").hidden = false;
+
+    $("side-menu").setAttribute("aria-hidden", "false");
+    $("menu-btn").setAttribute("aria-expanded", "true");
+  }
+
+  function closeMenu() {
+    $("side-menu").classList.remove("open");
+    $("menu-overlay").hidden = true;
+
+    $("side-menu").setAttribute("aria-hidden", "true");
+    $("menu-btn").setAttribute("aria-expanded", "false");
+  }
+
+  function setActiveMenu(id) {
+    document.querySelectorAll(".menu-link").forEach(button => {
+      button.classList.toggle("active", button.id === id);
+    });
+  }
+
+  /* =========================================
+     DENEME GEÇMİŞİ
+  ========================================= */
+
+  function renderHistory() {
+    const list = $("history-list");
+    if (!list) return;
+
+    list.replaceChildren();
+
+    if (!history.length) {
+      const p = document.createElement("p");
+      p.className = "empty-history";
+      p.textContent =
+        "Henüz tamamlanmış bir testin yok. İlk denemeni yap!";
+
+      list.append(p);
+      return;
+    }
+
+    history.slice(0, 10).forEach(item => {
+      const p = document.createElement("p");
+      p.className = "history-row";
+
+      const date = new Date(
+        item.created_at || item.date || Date.now()
+      ).toLocaleString("tr-TR");
+
+      p.textContent =
+        `${date} · Ortalama ${item.average_ms ?? item.average} ms`;
+
+      list.append(p);
+    });
+  }
+
+  /* =========================================
+     TEPKİ TESTİNİ SIFIRLA
+  ========================================= */
+
+  function reset() {
     clearTimeout(timer);
 
-    phase = "early";
-    area.className = "reaction-area early";
-
-    icon.textContent = "!";
-    title.textContent = "ÇOK ERKEN!";
-
-    help.textContent =
-      "Yeşil ışığı beklemeliydin. Yeniden başla.";
-
-    status.textContent = "Erken dokundun!";
-    start.disabled = false;
-
-    return;
-  }
-
-  if (phase === "go") {
-    const ms = Math.round(performance.now() - startedAt);
-
-    results.push(ms);
-    phase = "result";
+    timer = null;
+    round = 0;
+    results = [];
+    phase = "idle";
 
     area.className = "reaction-area ready";
-    icon.textContent = "✓";
-    title.textContent = `${ms} ms`;
+    icon.textContent = "✦";
+    title.textContent = "BAŞLAMAK İÇİN TIKLA";
 
-    help.textContent = `${round}. tur tamamlandı.`;
+    help.textContent =
+      "Ekran yeşile döndüğünde olabildiğince hızlı tıkla.";
+
+    status.textContent = "Hazır olduğunda teste başla.";
+
+    start.disabled = false;
+
+    stats();
+  }
+
+  /* =========================================
+     BULUTA KAYIT
+  ========================================= */
+
+  async function saveResult(average, bestRound) {
+    if (!currentUser || saving) return false;
+
+    saving = true;
+
+    try {
+      const userId = currentUser.id;
+
+      const { error } = await supabase
+        .from("reaction_results")
+        .insert({
+          user_id: userId,
+          average_ms: average,
+          best_ms: bestRound
+        });
+
+      if (error) {
+        status.textContent =
+          "Buluta kaydedilemedi: " + error.message;
+        return false;
+      }
+
+      lastUnsavedResult = null;
+
+      status.textContent =
+        "Rekorun başarıyla buluta kaydedildi!";
+
+      await loadCloudData();
+
+      return true;
+
+    } catch (error) {
+      status.textContent = "Kayıt hatası: " + error.message;
+      return false;
+
+    } finally {
+      saving = false;
+      profileUI();
+    }
+  }
+
+  /* =========================================
+     TEST BİTİŞİ
+  ========================================= */
+
+  function finish() {
+    phase = "finished";
+
+    const average = Math.round(
+      results.reduce((a, b) => a + b, 0) / results.length
+    );
+
+    const bestRound = Math.min(...results);
+
     status.textContent =
-      `${round}/${TOTAL} tur tamamlandı.`;
+      `Test tamamlandı! Ortalama tepki süren: ${average} ms.`;
+
+    icon.textContent = "✧";
+    title.textContent = `${average} ms`;
+
+    help.textContent =
+      "Harika! Yeniden denemek için Teste Başla'ya bas.";
+
+    area.className = "reaction-area ready";
+    start.disabled = false;
+
+    if (best === null || average < best) {
+      best = average;
+    }
+
+    const completedTest = {
+      average_ms: average,
+      best_ms: bestRound,
+      created_at: new Date().toISOString()
+    };
+
+    history.unshift(completedTest);
+    history = history.slice(0, 20);
+
+    lastUnsavedResult = completedTest;
+
+    stats();
+    renderHistory();
+    profileUI();
+
+    if (currentUser) {
+      saveResult(average, bestRound);
+    }
+  }
+
+  /* =========================================
+     YENİ TUR
+  ========================================= */
+
+  function nextRound() {
+    if (round >= TOTAL) {
+      finish();
+      return;
+    }
+
+    round++;
+    phase = "waiting";
 
     stats();
 
-    timer = setTimeout(nextRound, 750);
-    return;
+    area.className = "reaction-area waiting";
+    icon.textContent = "…";
+    title.textContent = "BEKLE…";
+
+    help.textContent = "Yeşil ışık yanmadan dokunma!";
+
+    status.textContent =
+      `${round}. tur · Yeşil ışığı bekle…`;
+
+    timer = setTimeout(() => {
+      if (phase !== "waiting") return;
+
+      phase = "go";
+      startedAt = performance.now();
+
+      area.className = "reaction-area go";
+      icon.textContent = "⚡";
+      title.textContent = "ŞİMDİ TIKLA!";
+      help.textContent = "Hemen dokun!";
+      status.textContent = "ŞİMDİ!";
+    }, 1300 + Math.random() * 2700);
   }
 
-  if (
-    phase === "idle" ||
-    phase === "finished" ||
-    phase === "early"
-  ) {
-    begin();
-  }
-}
+  function begin() {
+    reset();
 
-/* =========================================
-   AIM GRID OLUŞTUR
-========================================= */
+    start.disabled = true;
 
-function renderAimGrid() {
-  const grid = $("aim-grid");
-
-  if (grid.children.length === AIM_CELLS) {
-    return;
+    nextRound();
   }
 
-  grid.replaceChildren();
+  /* =========================================
+     TEPKİ ALGILAMA
+  ========================================= */
 
-  for (let i = 0; i < AIM_CELLS; i++) {
-    const cell = document.createElement("button");
+  function react() {
+    if (phase === "waiting") {
+      clearTimeout(timer);
 
-    cell.type = "button";
-    cell.className = "aim-cell";
-    cell.dataset.index = i;
-    cell.setAttribute("aria-label", `Hedef alanı ${i + 1}`);
+      phase = "early";
+      area.className = "reaction-area early";
 
-    cell.addEventListener("click", () => {
-      aimCellClick(i);
+      icon.textContent = "!";
+      title.textContent = "ÇOK ERKEN!";
+
+      help.textContent =
+        "Yeşil ışığı beklemeliydin. Yeniden başla.";
+
+      status.textContent = "Erken dokundun!";
+      start.disabled = false;
+
+      return;
+    }
+
+    if (phase === "go") {
+      const ms = Math.round(performance.now() - startedAt);
+
+      results.push(ms);
+      phase = "result";
+
+      area.className = "reaction-area ready";
+      icon.textContent = "✓";
+      title.textContent = `${ms} ms`;
+
+      help.textContent = `${round}. tur tamamlandı.`;
+      status.textContent = `${round}/${TOTAL} tur tamamlandı.`;
+
+      stats();
+
+      timer = setTimeout(nextRound, 750);
+      return;
+    }
+
+    if (
+      phase === "idle" ||
+      phase === "finished" ||
+      phase === "early"
+    ) {
+      begin();
+    }
+  }
+
+  /* =========================================
+     AIM GRID OLUŞTUR
+  ========================================= */
+
+  function renderAimGrid() {
+    const grid = $("aim-grid");
+
+    if (!grid) return;
+
+    if (grid.children.length === AIM_CELLS) {
+      return;
+    }
+
+    grid.replaceChildren();
+
+    for (let i = 0; i < AIM_CELLS; i++) {
+      const cell = document.createElement("button");
+
+      cell.type = "button";
+      cell.className = "aim-cell";
+      cell.dataset.index = i;
+
+      cell.setAttribute(
+        "aria-label",
+        `Hedef alanı ${i + 1}`
+      );
+
+      cell.addEventListener("click", () => {
+        aimCellClick(i);
+      });
+
+      grid.append(cell);
+    }
+  }
+
+  /* =========================================
+     AIM İSTATİSTİKLERİ
+  ========================================= */
+
+  function updateAimStats() {
+    setText("aim-score", aimScore);
+    setText("aim-time", aimTime);
+    setText("aim-hits", aimHits);
+
+    const attempts = aimHits + aimMisses;
+
+    const accuracy = attempts
+      ? Math.round((aimHits / attempts) * 100)
+      : 0;
+
+    setText("aim-accuracy", `%${accuracy}`);
+  }
+
+  /* =========================================
+     AIM ZORLUK SEÇİMİ
+  ========================================= */
+
+  function selectDifficulty(level) {
+    if (aimRunning || !AIM_LEVELS[level]) return;
+
+    aimDifficulty = level;
+
+    document.querySelectorAll(".difficulty-btn").forEach(button => {
+      button.classList.toggle(
+        "active",
+        button.dataset.difficulty === level
+      );
     });
 
-    grid.append(cell);
-  }
-}
-
-/* =========================================
-   AIM İSTATİSTİKLERİ
-========================================= */
-
-function updateAimStats() {
-  $("aim-score").textContent = aimScore;
-  $("aim-time").textContent = aimTime;
-  $("aim-hits").textContent = aimHits;
-
-  const attempts = aimHits + aimMisses;
-
-  const accuracy = attempts
-    ? Math.round((aimHits / attempts) * 100)
-    : 0;
-
-  $("aim-accuracy").textContent = `%${accuracy}`;
-}
-
-/* =========================================
-   AIM ZORLUK SEÇİMİ
-========================================= */
-
-function selectDifficulty(level) {
-  if (aimRunning) return;
-
-  if (!AIM_LEVELS[level]) return;
-
-  aimDifficulty = level;
-
-  document.querySelectorAll(".difficulty-btn").forEach(button => {
-    button.classList.toggle(
-      "active",
-      button.dataset.difficulty === level
+    setText(
+      "aim-status",
+      `${AIM_LEVELS[level].name} seviyesi seçildi. Oyuna başlayabilirsin.`
     );
-  });
+  }
 
-  const name = AIM_LEVELS[level].name;
+  /* =========================================
+     AIM HEDEF GÖSTER
+  ========================================= */
 
-  $("aim-status").textContent =
-    `${name} seviyesi seçildi. Oyuna başlayabilirsin.`;
-}
-
-/* =========================================
-   AIM HEDEF GÖSTER
-========================================= */
-
-function spawnAimTarget() {
-  if (!aimRunning) return;
-
-  const cells = Array.from(
-    $("aim-grid").querySelectorAll(".aim-cell")
-  );
-
-  if (!cells.length) return;
-
-  cells.forEach(cell => {
-    cell.classList.remove("target");
-    cell.disabled = false;
-    cell.textContent = "";
-  });
-
-  let next;
-
-  do {
-    next = Math.floor(Math.random() * AIM_CELLS);
-  } while (next === aimTarget && AIM_CELLS > 1);
-
-  aimTarget = next;
-
-  const targetCell = cells[next];
-
-  targetCell.classList.add("target");
-  targetCell.setAttribute("aria-label", "Mor hedef");
-
-  aimStartedAt = performance.now();
-
-  clearTimeout(aimSpawnTimer);
-
-  aimSpawnTimer = setTimeout(() => {
+  function spawnAimTarget() {
     if (!aimRunning) return;
 
-    aimMisses++;
-    aimTarget = -1;
+    const cells = Array.from(
+      $("aim-grid").querySelectorAll(".aim-cell")
+    );
 
-    updateAimStats();
-    spawnAimTarget();
+    if (!cells.length) return;
 
-  }, AIM_LEVELS[aimDifficulty].targetInterval);
-}
+    cells.forEach(cell => {
+      cell.classList.remove("target");
+      cell.replaceChildren();
+      cell.disabled = false;
+    });
 
-/* =========================================
-   AIM HÜCRE TIKLAMASI
-========================================= */
+    let next;
 
-function aimCellClick(index) {
-  if (!aimRunning) return;
+    do {
+      next = Math.floor(Math.random() * AIM_CELLS);
+    } while (next === aimTarget && AIM_CELLS > 1);
 
-  if (index === aimTarget) {
+    aimTarget = next;
+
+    const targetCell = cells[next];
+
+    targetCell.classList.add("target");
+    targetCell.setAttribute("aria-label", "Mor hedef");
+
+    // Hedefin görünmesini sağlayan neon mor daire.
+    const dot = document.createElement("span");
+    dot.className = "aim-target";
+    dot.setAttribute("aria-hidden", "true");
+
+    targetCell.append(dot);
+
+    aimStartedAt = performance.now();
+
     clearTimeout(aimSpawnTimer);
 
-    const reactionTime = Math.round(
-      performance.now() - aimStartedAt
+    aimSpawnTimer = setTimeout(() => {
+      if (!aimRunning) return;
+
+      aimMisses++;
+      aimTarget = -1;
+
+      updateAimStats();
+      spawnAimTarget();
+
+    }, AIM_LEVELS[aimDifficulty].targetInterval);
+  }
+
+  /* =========================================
+     AIM HÜCRE TIKLAMASI
+  ========================================= */
+
+  function aimCellClick(index) {
+    if (!aimRunning) return;
+
+    if (index === aimTarget) {
+      clearTimeout(aimSpawnTimer);
+
+      const reactionTime = Math.round(
+        performance.now() - aimStartedAt
+      );
+
+      aimReactionTimes.push(reactionTime);
+      aimHits++;
+
+      aimScore += AIM_LEVELS[aimDifficulty].points;
+
+      aimTarget = -1;
+
+      updateAimStats();
+      spawnAimTarget();
+
+    } else {
+      aimMisses++;
+      updateAimStats();
+
+      const cell = $("aim-grid").children[index];
+
+      if (cell) {
+        cell.classList.remove("miss");
+        void cell.offsetWidth;
+        cell.classList.add("miss");
+
+        setTimeout(() => {
+          cell.classList.remove("miss");
+        }, 250);
+      }
+    }
+  }
+
+  /* =========================================
+     AIM OYUNUNU BAŞLAT
+  ========================================= */
+
+  function startAim() {
+    if (aimRunning) return;
+
+    resetAimData();
+
+    aimRunning = true;
+
+    $("aim-start-btn").disabled = true;
+    $("aim-start-btn").textContent = "OYUN DEVAM EDİYOR";
+
+    document.querySelectorAll(".difficulty-btn").forEach(button => {
+      button.disabled = true;
+    });
+
+    setText(
+      "aim-status",
+      `${AIM_LEVELS[aimDifficulty].name} seviyesi başladı! Hedefleri vur!`
     );
 
-    aimReactionTimes.push(reactionTime);
-    aimHits++;
+    renderAimGrid();
+    spawnAimTarget();
 
-    aimScore += AIM_LEVELS[aimDifficulty].points;
+    aimTimer = setInterval(() => {
+      if (!aimRunning) return;
+
+      aimTime--;
+      updateAimStats();
+
+      if (aimTime <= 0) {
+        finishAim();
+      }
+    }, 1000);
+  }
+
+  function resetAimData() {
+    clearInterval(aimTimer);
+    clearTimeout(aimSpawnTimer);
+
+    aimScore = 0;
+    aimHits = 0;
+    aimMisses = 0;
+    aimTime = AIM_DURATION;
+    aimTarget = -1;
+    aimReactionTimes = [];
+
+    updateAimStats();
+
+    const grid = $("aim-grid");
+
+    if (grid) {
+      Array.from(grid.children).forEach(cell => {
+        cell.classList.remove("target", "miss");
+        cell.replaceChildren();
+        cell.disabled = false;
+      });
+    }
+  }
+
+  /* =========================================
+     AIM OYUNUNU DURDUR
+  ========================================= */
+
+  function stopAim() {
+    if (!aimRunning) return;
+
+    aimRunning = false;
+
+    clearInterval(aimTimer);
+    clearTimeout(aimSpawnTimer);
 
     aimTarget = -1;
 
-    updateAimStats();
-    spawnAimTarget();
+    const grid = $("aim-grid");
 
-  } else {
-    aimMisses++;
-    updateAimStats();
-
-    const cell = $("aim-grid").children[index];
-
-    if (cell) {
-      cell.classList.remove("miss");
-      void cell.offsetWidth;
-      cell.classList.add("miss");
-
-      setTimeout(() => {
-        cell.classList.remove("miss");
-      }, 250);
+    if (grid) {
+      Array.from(grid.children).forEach(cell => {
+        cell.classList.remove("target");
+        cell.replaceChildren();
+      });
     }
-  }
-}
 
-/* =========================================
-   AIM OYUNUNU BAŞLAT
-========================================= */
-
-function startAim() {
-  if (aimRunning) return;
-
-  resetAimData();
-
-  aimRunning = true;
-
-  $("aim-start-btn").disabled = true;
-  $("aim-start-btn").textContent = "OYUN DEVAM EDİYOR";
-
-  document.querySelectorAll(".difficulty-btn").forEach(button => {
-    button.disabled = true;
-  });
-
-  $("aim-status").textContent =
-    `${AIM_LEVELS[aimDifficulty].name} seviyesi başladı! Hedefleri vur!`;
-
-  renderAimGrid();
-  spawnAimTarget();
-
-  aimTimer = setInterval(() => {
-    if (!aimRunning) return;
-
-    aimTime--;
-
-    updateAimStats();
-
-    if (aimTime <= 0) {
-      finishAim();
+    if ($("aim-start-btn")) {
+      $("aim-start-btn").disabled = false;
+      $("aim-start-btn").textContent = "Yeniden Başlat";
     }
-  }, 1000);
-}
 
-/* =========================================
-   AIM VERİLERİNİ SIFIRLA
-========================================= */
-
-function resetAimData() {
-  clearInterval(aimTimer);
-  clearTimeout(aimSpawnTimer);
-
-  aimScore = 0;
-  aimHits = 0;
-  aimMisses = 0;
-  aimTime = AIM_DURATION;
-  aimTarget = -1;
-  aimReactionTimes = [];
-
-  updateAimStats();
-
-  const grid = $("aim-grid");
-
-  Array.from(grid.children).forEach(cell => {
-    cell.classList.remove("target", "miss");
-    cell.disabled = false;
-  });
-}
-
-/* =========================================
-   AIM OYUNUNU DURDUR
-========================================= */
-
-function stopAim() {
-  if (!aimRunning) return;
-
-  aimRunning = false;
-
-  clearInterval(aimTimer);
-  clearTimeout(aimSpawnTimer);
-
-  aimTarget = -1;
-
-  const grid = $("aim-grid");
-
-  if (grid) {
-    Array.from(grid.children).forEach(cell => {
-      cell.classList.remove("target");
+    document.querySelectorAll(".difficulty-btn").forEach(button => {
+      button.disabled = false;
     });
   }
 
-  $("aim-start-btn").disabled = false;
-  $("aim-start-btn").textContent = "Yeniden Başlat";
+  /* =========================================
+     AIM OYUNU BİTİŞİ
+  ========================================= */
 
-  document.querySelectorAll(".difficulty-btn").forEach(button => {
-    button.disabled = false;
-  });
-}
+  function finishAim() {
+    if (!aimRunning) return;
 
-/* =========================================
-   AIM OYUNU BİTİŞİ
-========================================= */
+    const finalScore = aimScore;
+    const finalHits = aimHits;
+    const finalMisses = aimMisses;
 
-function finishAim() {
-  if (!aimRunning) return;
+    const attempts = finalHits + finalMisses;
 
-  const finalScore = aimScore;
-  const finalHits = aimHits;
-  const finalMisses = aimMisses;
+    const accuracy = attempts
+      ? Math.round((finalHits / attempts) * 100)
+      : 0;
 
-  const attempts = finalHits + finalMisses;
+    const averageReaction = aimReactionTimes.length
+      ? Math.round(
+          aimReactionTimes.reduce((a, b) => a + b, 0) /
+          aimReactionTimes.length
+        )
+      : 0;
 
-  const accuracy = attempts
-    ? Math.round((finalHits / attempts) * 100)
-    : 0;
+    stopAim();
 
-  const averageReaction = aimReactionTimes.length
-    ? Math.round(
-        aimReactionTimes.reduce((a, b) => a + b, 0) /
-        aimReactionTimes.length
-      )
-    : 0;
+    aimTime = 0;
+    updateAimStats();
 
-  stopAim();
+    setText(
+      "aim-status",
+      `Süre bitti! Skorun: ${finalScore} · İsabet: ${finalHits} · Doğruluk: %${accuracy} · Ortalama tepki: ${averageReaction || "—"} ms`
+    );
 
-  $("aim-time").textContent = "0";
+    $("aim-start-btn").textContent = "Tekrar Oyna";
+  }
 
-  $("aim-status").textContent =
-    `Süre bitti! Skorun: ${finalScore} · İsabet: ${finalHits} · Doğruluk: %${accuracy} · Ortalama tepki: ${averageReaction || "—"} ms`;
+  /* =========================================
+     GİRİŞ PENCERESİ
+  ========================================= */
 
-  $("aim-start-btn").textContent = "Tekrar Oyna";
+  
+  function openDialog(mode) {
+    authMode = mode;
 
-  updateAimStats();
-}
+    const dialog = $("account-dialog");
 
-/* =========================================
-   GİRİŞ PENCERESİ
-========================================= */
+    if (!dialog.open) dialog.showModal();
 
-function openDialog(mode) {
-  authMode = mode;
+    message("");
 
-  $("account-dialog").showModal();
-  $("dialog-error").textContent = "";
+    const registering = mode === "register";
+    const resetting = mode === "reset";
 
-  const registering = mode === "register";
-  const resetting = mode === "reset";
+    setText(
+      "dialog-title",
+      resetting ? "Şifre yenile" : registering ? "Hesap oluştur" : "Giriş Yap"
+    );
 
-  $("dialog-title").textContent = resetting
-    ? "Şifre yenile"
-    : registering
-    ? "Hesap oluştur"
-    : "Giriş Yap";
+    setText(
+      "dialog-copy",
+      resetting
+        ? "E-posta adresine şifre yenileme bağlantısı göndereceğiz."
+        : registering
+        ? "Kullanıcı adını, e-postanı ve şifreni belirle."
+        : "Hesabına giriş yap ve rekorlarını bulutta sakla."
+    );
 
-  $("dialog-copy").textContent = resetting
-    ? "E-posta adresine şifre yenileme bağlantısı göndereceğiz."
-    : registering
-    ? "Kullanıcı adını, e-postanı ve şifreni belirle."
-    : "Hesabına giriş yap ve rekorlarını bulutta sakla.";
+    $("username-label").hidden = !registering;
+    $("username-input").hidden = !registering;
+    $("password-input").hidden = resetting;
+    $("forgot-btn").hidden = registering || resetting;
+    $("switch-mode-btn").hidden = resetting;
 
-  $("username-label").hidden = !registering;
-  $("username-input").hidden = !registering;
-  $("password-input").hidden = resetting;
-  $("forgot-btn").hidden = registering || resetting;
+    $("confirm-account-btn").textContent = resetting
+      ? "Sıfırlama bağlantısı gönder"
+      : registering
+      ? "Kayıt Ol"
+      : "Giriş Yap";
 
-  $("confirm-account-btn").textContent = resetting
-    ? "Sıfırlama bağlantısı gönder"
-    : registering
-    ? "Kayıt Ol"
-    : "Giriş Yap";
+    $("switch-mode-btn").textContent = registering
+      ? "Zaten hesabın var mı? Giriş yap"
+      : "Hesabın yok mu? Kayıt ol";
+  }
 
-  $("switch-mode-btn").hidden = resetting;
+  /* BULUT VERİLERİ */
 
-  $("switch-mode-btn").textContent = registering
-    ? "Zaten hesabın var mı? Giriş yap"
-    : "Hesabın yok mu? Kayıt ol";
-}
+  async function loadCloudData() {
+    if (!currentUser) return;
 
-/* =========================================
-   BULUT VERİLERİNİ YÜKLE
-========================================= */
+    const userId = currentUser.id;
 
-async function loadCloudData() {
-  if (!currentUser) return;
-
-  const userId = currentUser.id;
-
-  profileUI();
-
-  try {
-    const { data: profile, error: profileError } =
-      await supabase
+    try {
+      const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("username")
         .eq("id", userId)
         .maybeSingle();
 
-    if (currentUser?.id !== userId) return;
+      if (currentUser?.id !== userId) return;
 
-    if (!profileError && profile) {
-      username = profile.username;
+      if (!profileError && profile) {
+        username = profile.username || "";
+      }
+
+      const { data, error } = await supabase
+        .from("reaction_results")
+        .select("average_ms,best_ms,created_at")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
+
+      if (currentUser?.id !== userId) return;
+
+      if (error) throw error;
+
+      history = data || [];
+
+      best = history.length
+        ? Math.min(...history.map(item => Number(item.average_ms)).filter(Number.isFinite))
+        : null;
+
+      renderHistory();
+      renderProfile();
+      profileUI();
+      stats();
+
+    } catch (error) {
+      console.error("Bulut verileri yüklenemedi:", error);
+    }
+  }
+
+  /* GİRİŞ / KAYIT / ŞİFRE YENİLEME */
+
+  async function submitAuth() {
+    if (saving) return;
+
+    const email = $("email-input").value.trim();
+    const password = $("password-input").value;
+    const userName = $("username-input").value.trim();
+
+    if (!email) {
+      message("E-posta adresini gir.", true);
+      return;
+    }
+
+    if (authMode !== "reset" && !password) {
+      message("Şifreni gir.", true);
+      return;
+    }
+
+    if (authMode === "register") {
+      if (userName.length < 3) {
+        message("Kullanıcı adı en az 3 karakter olmalı.", true);
+        return;
+      }
+
+      if (!/^[a-zA-Z0-9_]+$/.test(userName)) {
+        message("Kullanıcı adında yalnızca harf, sayı ve _ kullanabilirsin.", true);
+        return;
+      }
+
+      if (password.length < 8) {
+        message("Şifren en az 8 karakter olmalı.", true);
+        return;
+      }
+    }
+
+    saving = true;
+    const button = $("confirm-account-btn");
+    button.disabled = true;
+
+    try {
+      if (authMode === "reset") {
+        const { error } = await supabase.auth.resetPasswordForEmail(
+          email,
+          {
+            redirectTo: window.location.origin + window.location.pathname
+          }
+        );
+
+        if (error) throw error;
+
+        message("Şifre yenileme bağlantısı e-posta adresine gönderildi.");
+        return;
+      }
+
+      if (authMode === "register") {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { username: userName }
+          }
+        });
+
+        if (error) throw error;
+
+        if (data.user && data.session) {
+          currentUser = data.user;
+          username = userName;
+
+          await supabase
+            .from("profiles")
+            .update({ username: userName })
+            .eq("id", data.user.id);
+
+          $("account-dialog").close();
+
+          await loadCloudData();
+          profileUI();
+
+          status.textContent = "Hesabın oluşturuldu. Hoş geldin!";
+        } else {
+          message("Kayıt oluşturuldu. E-postana gelen doğrulama bağlantısını kontrol et.");
+        }
+
+        return;
+      }
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) throw error;
+
+      currentUser = data.user;
+      $("account-dialog").close();
+
+      await loadCloudData();
+      profileUI();
+
+      status.textContent = "Başarıyla giriş yaptın!";
+
+    } catch (error) {
+      message(error.message || "Bir hata oluştu.", true);
+
+    } finally {
+      saving = false;
+      button.disabled = false;
+    }
+  }
+
+  /* ÇIKIŞ */
+
+  async function logout() {
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      alert("Çıkış yapılamadı: " + error.message);
+      return;
+    }
+
+    currentUser = null;
+    username = "";
+    history = [];
+    best = null;
+    lastUnsavedResult = null;
+
+    profileUI();
+    renderHistory();
+    stats();
+    showHome();
+
+    status.textContent = "Hesabından çıkış yaptın.";
+  }
+
+  /* BUTON BAĞLANTILARI */
+
+  $("menu-btn").addEventListener("click", openMenu);
+  $("close-menu-btn").addEventListener("click", closeMenu);
+  $("menu-overlay").addEventListener("click", closeMenu);
+
+  $("nav-reaction").addEventListener("click", showReaction);
+  $("nav-aim").addEventListener("click", showAim);
+  $("nav-profile").addEventListener("click", openProfile);
+
+  area.addEventListener("click", react);
+  start.addEventListener("click", begin);
+
+  $("login-btn").addEventListener("click", () => openDialog("login"));
+  $("register-btn").addEventListener("click", () => openDialog("register"));
+  $("profile-btn").addEventListener("click", openProfile);
+  $("logout-btn").addEventListener("click", logout);
+
+  $("profile-logout-btn").addEventListener("click", logout);
+  $("back-home-btn").addEventListener("click", showHome);
+
+  $("confirm-account-btn").addEventListener("click", submitAuth);
+
+  $("switch-mode-btn").addEventListener("click", () => {
+    openDialog(authMode === "register" ? "login" : "register");
+  });
+
+  $("forgot-btn").addEventListener("click", () => openDialog("reset"));
+
+  document.querySelectorAll(".difficulty-btn").forEach(button => {
+    button.addEventListener("click", () => {
+      selectDifficulty(button.dataset.difficulty);
+    });
+  });
+
+  $("aim-start-btn").addEventListener("click", startAim);
+
+  /* GEÇMİŞİ TEMİZLE */
+
+  $("clear-history-btn").addEventListener("click", async () => {
+    if (!history.length) return;
+
+    if (!confirm("Deneme geçmişini silmek istediğine emin misin?")) return;
+
+    if (currentUser) {
+      const { error } = await supabase
+        .from("reaction_results")
+        .delete()
+        .eq("user_id", currentUser.id);
+
+      if (error) {
+        alert("Geçmiş silinemedi: " + error.message);
+        return;
+      }
+    }
+
+    history = [];
+    best = null;
+    lastUnsavedResult = null;
+
+    renderHistory();
+    renderProfile();
+    profileUI();
+    stats();
+
+    status.textContent = "Deneme geçmişin temizlendi.";
+  });
+
+  /* MANUEL KAYIT */
+
+  $("save-btn").addEventListener("click", async () => {
+    if (!currentUser || !lastUnsavedResult) return;
+
+    await saveResult(
+      lastUnsavedResult.average_ms,
+      lastUnsavedResult.best_ms
+    );
+  });
+
+  /* KLAVYE */
+
+  document.addEventListener("keydown", event => {
+    if (event.code === "Escape") {
+      closeMenu();
+      return;
+    }
+
+    if (event.code !== "Space") return;
+    if ($("account-dialog").open) return;
+    if (!$("profile-page").hidden) return;
+    if (!$("aim-view").hidden) return;
+
+    const active = document.activeElement;
+
+    if (active && ["INPUT", "TEXTAREA", "BUTTON"].includes(active.tagName)) {
+      return;
+    }
+
+    event.preventDefault();
+    react();
+  });
+
+  /* SUPABASE OTURUMU */
+
+  supabase.auth.onAuthStateChange(async (event, session) => {
+    currentUser = session?.user || null;
+
+    if (currentUser) {
+      await loadCloudData();
+    } else {
+      username = "";
+      history = [];
+      best = null;
+      lastUnsavedResult = null;
+
+      renderHistory();
+      stats();
     }
 
     profileUI();
+  });
 
-    const { data, error } = await supabase
-      .from("reaction_results")
-      .select("average_ms,best_ms,created_at")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false });
+  /* İLK AÇILIŞ */
 
-    if (currentUser?.id !== userId) return;
-      
+  async function initialize() {
+    renderAimGrid();
+    renderHistory();
+    stats();
+    updateAimStats();
+    profileUI();
+
+    try {
+      const { data, error } = await supabase.auth.getSession();
+
+      if (error) throw error;
+
+      currentUser = data.session?.user || null;
+
+      if (currentUser) {
+        await loadCloudData();
+      }
+
+      profileUI();
+
+    } catch (error) {
+      console.error("Oturum kontrolü başarısız:", error);
+      status.textContent = "Hesap bağlantısı kontrol edilemedi.";
+    }
+  }
+
+  initialize();
+
+})();
+             
