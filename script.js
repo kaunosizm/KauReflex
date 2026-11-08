@@ -2171,12 +2171,6 @@ function getDuelRoomId(data) {
     null
   );
 }
-   
-  if (typeof data === "string") return data;
-  if (Array.isArray(data)) data = data[0];
-
-  return data?.room_id || data?.id || data?.create_duel_room || data?.join_duel_room || null;
-}
 
 async function createDuelRoom() {
   if (!currentUser) {
