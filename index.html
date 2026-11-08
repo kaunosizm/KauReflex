@@ -9,8 +9,7 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="ambient ambient-one"></div>
-  <div class="ambient ambient-two"></div>
+  <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
   <header class="topbar">
     <a class="brand-small" href="#" aria-label="KauReflex ana sayfa">Kau<span>Reflex</span></a>
     <nav class="account-actions" aria-label="Hesap işlemleri">
@@ -20,90 +19,47 @@
       <button class="button button-ghost" id="logout-btn" hidden>Çıkış</button>
     </nav>
   </header>
-
   <main class="page">
     <section class="hero">
       <p class="eyebrow"><span class="pulse-dot"></span> REFLEKS TEST MERKEZİ</p>
-      <h1>KauReflex</h1>
-      <h2>Refleksinizi Ölçün</h2>
+      <h1>KauReflex</h1><h2>Refleksinizi Ölçün</h2>
       <p class="intro">Işık yeşile döndüğünde tepki ver. Süreni ölç, rekorunu geliştir.</p>
     </section>
-
     <section class="test-card" aria-labelledby="test-title">
-      <div class="test-heading">
-        <div>
-          <p class="eyebrow">HAZIR MISIN?</p>
-          <h3 id="test-title">5 turluk refleks testi</h3>
-        </div>
-        <div class="round-counter" id="round-counter">0 / 5</div>
-      </div>
-
+      <div class="test-heading"><div><p class="eyebrow">HAZIR MISIN?</p><h3 id="test-title">5 turluk refleks testi</h3></div><div class="round-counter" id="round-counter">0 / 5</div></div>
       <button id="reaction-area" class="reaction-area ready" type="button">
-        <span class="reaction-icon" id="reaction-icon">✦</span>
-        <strong id="reaction-title">BAŞLAMAK İÇİN TIKLA</strong>
+        <span class="reaction-icon" id="reaction-icon">✦</span><strong id="reaction-title">BAŞLAMAK İÇİN TIKLA</strong>
         <span id="reaction-help">Ekran yeşile döndüğünde olabildiğince hızlı tıkla.</span>
       </button>
-      <div class="test-controls">
-        <button id="start-btn" class="button button-primary start-button">Teste Başla</button>
-        <p class="keyboard-hint">Klavyeden <kbd>SPACE</kbd> tuşunu da kullanabilirsin.</p>
-      </div>
+      <div class="test-controls"><button id="start-btn" class="button button-primary start-button">Teste Başla</button><p class="keyboard-hint">Klavyeden <kbd>SPACE</kbd> tuşunu da kullanabilirsin.</p></div>
       <p id="status-message" class="status-message" role="status" aria-live="polite">Hazır olduğunda teste başla.</p>
     </section>
-
     <section class="stats-grid" aria-label="Performans istatistikleri">
-      <article class="stat-card">
-        <span class="stat-label">TEST ORTALAMASI</span>
-        <strong id="average-stat">—</strong><small>ms</small>
-      </article>
-      <article class="stat-card">
-        <span class="stat-label">SON DENEME</span>
-        <strong id="last-stat">—</strong><small>ms</small>
-      </article>
-      <article class="stat-card">
-        <span class="stat-label">KİŞİSEL REKOR</span>
-        <strong id="best-stat">—</strong><small>ms</small>
-      </article>
+      <article class="stat-card"><span class="stat-label">TEST ORTALAMASI</span><strong id="average-stat">—</strong><small>ms</small></article>
+      <article class="stat-card"><span class="stat-label">SON DENEME</span><strong id="last-stat">—</strong><small>ms</small></article>
+      <article class="stat-card"><span class="stat-label">KİŞİSEL REKOR</span><strong id="best-stat">—</strong><small>ms</small></article>
     </section>
-
-    <section class="save-card">
-      <div class="save-symbol">✧</div>
-      <div>
-        <h3>Rekorunu sakla</h3>
-        <p id="save-description">Rekorunu bu cihazdaki demo profiline kaydetmek için giriş yap. Üye olmadan da test çözebilirsin.</p>
-      </div>
-      <button id="save-btn" class="button button-outline" disabled>Rekoru Kaydet</button>
-    </section>
-
+    <section class="save-card"><div class="save-symbol">✧</div><div><h3>Rekorunu sakla</h3><p id="save-description">Rekorunu buluta kaydetmek için giriş yap. Üye olmadan da test çözebilirsin.</p></div><button id="save-btn" class="button button-outline" disabled>Rekoru Kaydet</button></section>
     <section class="history-section">
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">PERFORMANS TAKİBİ</p>
-          <h3>Deneme geçmişi</h3>
-        </div>
-        <button id="clear-history-btn" class="text-button">Geçmişi temizle</button>
-      </div>
-      <div id="history-list" class="history-list">
-        <p class="empty-history">Henüz tamamlanmış bir testin yok. İlk denemeni yap!</p>
-      </div>
+      <div class="section-heading"><div><p class="eyebrow">PERFORMANS TAKİBİ</p><h3>Deneme geçmişi</h3></div><button id="clear-history-btn" class="text-button">Geçmişi temizle</button></div>
+      <div id="history-list" class="history-list"><p class="empty-history">Henüz tamamlanmış bir testin yok. İlk denemeni yap!</p></div>
     </section>
-
-    <footer>
-      <span>KAUREFLEX <span class="footer-dot">•</span> V1.1</span>
-      <span>Tepki süresi cihazına ve ekranına göre değişebilir.</span>
-    </footer>
+    <footer><span>KAUREFLEX <span class="footer-dot">•</span> V2</span><span>Tepki süresi cihazına ve ekranına göre değişebilir.</span></footer>
   </main>
-
   <dialog id="account-dialog" class="account-dialog">
     <form method="dialog" class="dialog-close-row"><button class="close-button" aria-label="Kapat">×</button></form>
-    <p class="eyebrow">KAUREFLEX HESABI</p>
-    <h3 id="dialog-title">Demo profiline giriş</h3>
-    <p class="dialog-copy">Bu V1.1 sürümünde yalnızca cihazında tutulan bir demo profil oluşturulur. Gerçek hesap ve bulut kaydı V2'de kurulacaktır.</p>
-    <label for="username-input">Kullanıcı adı</label>
-    <input id="username-input" maxlength="24" autocomplete="nickname" placeholder="Örn. YVNUS">
+    <p class="eyebrow">KAUREFLEX HESABI</p><h3 id="dialog-title">Giriş Yap</h3>
+    <p id="dialog-copy" class="dialog-copy">Hesabına giriş yap ve rekorlarını bulutta sakla.</p>
+    <label id="username-label" for="username-input" hidden>Kullanıcı adı</label>
+    <input id="username-input" maxlength="24" autocomplete="username" placeholder="Kullanıcı adı" hidden>
+    <label for="email-input">E-posta</label><input id="email-input" type="email" autocomplete="email" placeholder="ornek@eposta.com">
+    <label for="password-input">Şifre</label><input id="password-input" type="password" autocomplete="current-password" placeholder="En az 8 karakter">
+    <button id="forgot-btn" class="text-button forgot-button" type="button">Şifremi unuttum</button>
     <p id="dialog-error" class="dialog-error" aria-live="polite"></p>
-    <button id="confirm-account-btn" class="button button-primary dialog-submit">Devam Et</button>
+    <button id="confirm-account-btn" class="button button-primary dialog-submit" type="button">Giriş Yap</button>
+    <button id="switch-mode-btn" class="text-button switch-button" type="button">Hesabın yok mu? Kayıt ol</button>
   </dialog>
-
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="script.js"></script>
 </body>
 </html>
