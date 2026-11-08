@@ -1,11 +1,10 @@
-
 <!doctype html>
 <html lang="tr">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#080611">
-  <meta name="description" content="KauReflex ile refleksini ölç, Aim Laboratuvarı'nda nişan alma hızını geliştir.">
+  <meta name="description" content="KauReflex ile refleksini ölç, Aim Laboratuvarı'nda nişan alma hızını ve CPS Ölçer ile tıklama hızını geliştir.">
   <title>KauReflex — Refleks ve Aim Merkezi</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -34,6 +33,12 @@
     <button class="menu-link" id="nav-aim" type="button">
       <span class="menu-icon">◎</span>
       <span>Aim Laboratuvarı</span>
+      <span class="menu-new">YENİ</span>
+    </button>
+
+    <button class="menu-link" id="nav-cps" type="button">
+      <span class="menu-icon">✥</span>
+      <span>CPS Ölçer</span>
       <span class="menu-new">YENİ</span>
     </button>
 
@@ -274,15 +279,119 @@
           </div>
         </section>
       </section>
+            <!-- CPS ÖLÇER -->
+      <section id="cps-view" class="cps-view" hidden>
+
+        <div class="cps-heading">
+          <p class="eyebrow">KAUREFLEX TRAINING</p>
+          <h3>CPS Ölçer</h3>
+          <p class="intro">
+            Saniyedeki tıklama hızını ölç ve kendi rekorunu kır!
+          </p>
+        </div>
+
+        <section class="cps-card">
+
+          <div class="cps-duration-area">
+            <p class="eyebrow">TEST SÜRESİ</p>
+
+            <div class="cps-durations">
+              <button class="cps-duration-btn active"
+                data-duration="5" type="button">5 SN</button>
+
+              <button class="cps-duration-btn"
+                data-duration="10" type="button">10 SN</button>
+
+              <button class="cps-duration-btn"
+                data-duration="30" type="button">30 SN</button>
+            </div>
+          </div>
+
+          <div class="cps-stats">
+            <div class="cps-stat">
+              <small>TIKLAMA</small>
+              <strong id="cps-clicks">0</strong>
+            </div>
+
+            <div class="cps-stat">
+              <small>KALAN SÜRE</small>
+              <strong id="cps-time">5.0</strong>
+            </div>
+
+            <div class="cps-stat">
+              <small>ANLIK CPS</small>
+              <strong id="cps-current">0.00</strong>
+            </div>
+          </div>
+
+          <button id="cps-click-area" class="cps-click-area"
+            type="button" disabled>
+            <span class="cps-click-icon">✥</span>
+            <strong id="cps-click-title">BAŞLAMAK İÇİN TIKLA</strong>
+            <small id="cps-click-help">
+              Teste başla ve olabildiğince hızlı tıkla!
+            </small>
+          </button>
+
+          <p id="cps-status" class="status-message"
+            role="status" aria-live="polite">
+            Bir süre seç ve teste başla.
+          </p>
+
+          <div class="cps-controls">
+            <button id="cps-start-btn"
+              class="button button-primary start-button"
+              type="button">
+              Teste Başla
+            </button>
+          </div>
+
+        </section>
+
+        <section class="cps-results">
+
+          <article class="stat-card">
+            <span class="stat-label">TOPLAM TIKLAMA</span>
+            <strong id="cps-result-clicks">—</strong>
+          </article>
+
+          <article class="stat-card">
+            <span class="stat-label">ORTALAMA CPS</span>
+            <strong id="cps-result-average">—</strong>
+          </article>
+
+          <article class="stat-card">
+            <span class="stat-label">KİŞİSEL REKOR</span>
+            <strong id="cps-result-best">—</strong>
+          </article>
+
+        </section>
+
+        <section class="aim-info cps-info">
+          <div class="save-symbol">✦</div>
+          <div>
+            <h3>CPS Ölçer nasıl oynanır?</h3>
+            <p>
+              5, 10 veya 30 saniyelik sürelerden birini seç.
+              Başlat düğmesine bastıktan sonra mor alana olabildiğince
+              hızlı tıkla. Süre sonunda ortalama CPS değerini görebilirsin.
+            </p>
+          </div>
+        </section>
+
+      </section>
+
     </div>
 
     <!-- PROFİL SAYFASI -->
     <section id="profile-page" class="profile-page" hidden>
+
       <div class="section-heading">
         <div>
           <p class="eyebrow">KAUREFLEX HESABI</p>
           <h3>Profilim</h3>
         </div>
+
         <button id="back-home-btn" class="button button-outline">
           ← Ana Sayfa
         </button>
@@ -298,6 +407,7 @@
       </div>
 
       <div class="profile-stats">
+
         <article class="stat-card">
           <span class="stat-label">EN İYİ ORTALAMA</span>
           <strong id="profile-best-average">—</strong>
@@ -321,6 +431,7 @@
           <strong id="profile-test-count">0</strong>
           <small>test</small>
         </article>
+
       </div>
 
       <p id="profile-note" class="status-message"></p>
@@ -330,55 +441,75 @@
           Çıkış Yap
         </button>
       </div>
+
     </section>
 
     <footer>
-      <span>KAUREFLEX <span class="footer-dot">•</span> V3</span>
+      <span>KAUREFLEX <span class="footer-dot">•</span> V4</span>
       <span>Tepki süresi cihazına ve ekranına göre değişebilir.</span>
     </footer>
+
   </main>
 
   <!-- HESAP PENCERESİ -->
   <dialog id="account-dialog" class="account-dialog">
+
     <form method="dialog" class="dialog-close-row">
       <button class="close-button" aria-label="Kapat">×</button>
     </form>
 
     <p class="eyebrow">KAUREFLEX HESABI</p>
+
     <h3 id="dialog-title">Giriş Yap</h3>
+
     <p id="dialog-copy" class="dialog-copy">
       Hesabına giriş yap ve rekorlarını bulutta sakla.
     </p>
 
-    <label id="username-label" for="username-input" hidden>Kullanıcı adı</label>
-    <input id="username-input" maxlength="24" autocomplete="username"
+    <label id="username-label" for="username-input" hidden>
+      Kullanıcı adı
+    </label>
+
+    <input id="username-input" maxlength="24"
+      autocomplete="username"
       placeholder="Kullanıcı adı" hidden>
 
     <label for="email-input">E-posta</label>
-    <input id="email-input" type="email" autocomplete="email"
+
+    <input id="email-input" type="email"
+      autocomplete="email"
       placeholder="ornek@eposta.com">
 
     <label for="password-input">Şifre</label>
-    <input id="password-input" type="password" autocomplete="current-password"
+
+    <input id="password-input" type="password"
+      autocomplete="current-password"
       placeholder="En az 8 karakter">
 
-    <button id="forgot-btn" class="text-button forgot-button" type="button">
+    <button id="forgot-btn"
+      class="text-button forgot-button"
+      type="button">
       Şifremi unuttum
     </button>
 
     <p id="dialog-error" class="dialog-error" aria-live="polite"></p>
 
-    <button id="confirm-account-btn" class="button button-primary dialog-submit" type="button">
+    <button id="confirm-account-btn"
+      class="button button-primary dialog-submit"
+      type="button">
       Giriş Yap
     </button>
 
-    <button id="switch-mode-btn" class="text-button switch-button" type="button">
+    <button id="switch-mode-btn"
+      class="text-button switch-button"
+      type="button">
       Hesabın yok mu? Kayıt ol
     </button>
+
   </dialog>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="script.js"></script>
+
 </body>
-            </html>
-            
+</html>
