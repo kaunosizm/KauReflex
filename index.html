@@ -5,16 +5,67 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#080611">
-  <meta name="description" content="KauReflex ile refleksini ölç. Beş turda tepki süreni öğren.">
-  <title>KauReflex — Refleksinizi Ölçün</title>
+  <meta name="description" content="KauReflex ile refleksini ölç, Aim Laboratuvarı'nda nişan alma hızını geliştir.">
+  <title>KauReflex — Refleks ve Aim Merkezi</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="ambient ambient-one"></div>
   <div class="ambient ambient-two"></div>
 
+  <!-- SOL MENÜ -->
+  <div id="menu-overlay" class="menu-overlay" hidden></div>
+
+  <aside id="side-menu" class="side-menu" aria-label="Ana menü" aria-hidden="true">
+    <div class="side-menu-header">
+      <a class="brand-small" href="#" aria-label="KauReflex ana sayfa">
+        Kau<span>Reflex</span>
+      </a>
+      <button id="close-menu-btn" class="close-button" type="button" aria-label="Menüyü kapat">×</button>
+    </div>
+
+    <p class="menu-label">PLATFORM</p>
+
+    <button class="menu-link active" id="nav-reaction" type="button">
+      <span class="menu-icon">⚡</span>
+      <span>Tepki Ölçer</span>
+    </button>
+
+    <button class="menu-link" id="nav-aim" type="button">
+      <span class="menu-icon">◎</span>
+      <span>Aim Laboratuvarı</span>
+      <span class="menu-new">YENİ</span>
+    </button>
+
+    <div class="menu-divider"></div>
+
+    <p class="menu-label">HESAP</p>
+
+    <button class="menu-link" id="nav-profile" type="button">
+      <span class="menu-icon">♙</span>
+      <span>Profilim</span>
+    </button>
+
+    <div class="side-menu-footer">
+      <span>KAUREFLEX</span>
+      <small>REFLEX TRAINING PLATFORM</small>
+    </div>
+  </aside>
+
+  <!-- ÜST MENÜ -->
   <header class="topbar">
-    <a class="brand-small" href="#" aria-label="KauReflex ana sayfa">Kau<span>Reflex</span></a>
+    <div class="topbar-left">
+      <button id="menu-btn" class="menu-toggle" type="button"
+        aria-label="Menüyü aç" aria-expanded="false">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+
+      <a class="brand-small" href="#" aria-label="KauReflex ana sayfa">
+        Kau<span>Reflex</span>
+      </a>
+    </div>
 
     <nav class="account-actions" aria-label="Hesap işlemleri">
       <span id="user-label" class="user-label" hidden></span>
@@ -29,74 +80,199 @@
 
     <!-- ANA SAYFA -->
     <div id="home-view">
+
       <section class="hero">
-        <p class="eyebrow"><span class="pulse-dot"></span> REFLEKS TEST MERKEZİ</p>
+        <p class="eyebrow">
+          <span class="pulse-dot"></span>
+          REFLEKS VE PERFORMANS MERKEZİ
+        </p>
         <h1>KauReflex</h1>
-        <h2>Refleksinizi Ölçün</h2>
-        <p class="intro">Işık yeşile döndüğünde tepki ver. Süreni ölç, rekorunu geliştir.</p>
+        <h2>Refleksini Geliştir</h2>
+        <p class="intro">
+          Tepki hızını ölç, hedeflerini vur ve performansını geliştir.
+        </p>
       </section>
 
-      <section class="test-card" aria-labelledby="test-title">
-        <div class="test-heading">
-          <div>
-            <p class="eyebrow">HAZIR MISIN?</p>
-            <h3 id="test-title">5 turluk refleks testi</h3>
+      <!-- TEPKİ ÖLÇER -->
+      <div id="reaction-view">
+
+        <section class="test-card" aria-labelledby="test-title">
+          <div class="test-heading">
+            <div>
+              <p class="eyebrow">HAZIR MISIN?</p>
+              <h3 id="test-title">5 turluk refleks testi</h3>
+            </div>
+            <div class="round-counter" id="round-counter">0 / 5</div>
           </div>
-          <div class="round-counter" id="round-counter">0 / 5</div>
-        </div>
 
-        <button id="reaction-area" class="reaction-area ready" type="button">
-          <span class="reaction-icon" id="reaction-icon">✦</span>
-          <strong id="reaction-title">BAŞLAMAK İÇİN TIKLA</strong>
-          <span id="reaction-help">Ekran yeşile döndüğünde olabildiğince hızlı tıkla.</span>
-        </button>
+          <button id="reaction-area" class="reaction-area ready" type="button">
+            <span class="reaction-icon" id="reaction-icon">✦</span>
+            <strong id="reaction-title">BAŞLAMAK İÇİN TIKLA</strong>
+            <span id="reaction-help">
+              Ekran yeşile döndüğünde olabildiğince hızlı tıkla.
+            </span>
+          </button>
 
-        <div class="test-controls">
-          <button id="start-btn" class="button button-primary start-button">Teste Başla</button>
-          <p class="keyboard-hint">Klavyeden <kbd>SPACE</kbd> tuşunu da kullanabilirsin.</p>
-        </div>
+          <div class="test-controls">
+            <button id="start-btn" class="button button-primary start-button">
+              Teste Başla
+            </button>
+            <p class="keyboard-hint">
+              Klavyeden <kbd>SPACE</kbd> tuşunu da kullanabilirsin.
+            </p>
+          </div>
 
-        <p id="status-message" class="status-message" role="status" aria-live="polite">Hazır olduğunda teste başla.</p>
-      </section>
+          <p id="status-message" class="status-message" role="status" aria-live="polite">
+            Hazır olduğunda teste başla.
+          </p>
+        </section>
 
-      <section class="stats-grid" aria-label="Performans istatistikleri">
-        <article class="stat-card">
-          <span class="stat-label">TEST ORTALAMASI</span>
-          <strong id="average-stat">—</strong>
-          <small>ms</small>
-        </article>
-        <article class="stat-card">
-          <span class="stat-label">SON DENEME</span>
-          <strong id="last-stat">—</strong>
-          <small>ms</small>
-        </article>
-        <article class="stat-card">
-          <span class="stat-label">KİŞİSEL REKOR</span>
-          <strong id="best-stat">—</strong>
-          <small>ms</small>
-        </article>
-      </section>
+        <section class="stats-grid" aria-label="Performans istatistikleri">
+          <article class="stat-card">
+            <span class="stat-label">TEST ORTALAMASI</span>
+            <strong id="average-stat">—</strong>
+            <small>ms</small>
+          </article>
 
-      <section class="save-card">
-        <div class="save-symbol">✧</div>
-        <div>
-          <h3>Rekorunu sakla</h3>
-          <p id="save-description">Rekorunu buluta kaydetmek için giriş yap. Üye olmadan da test çözebilirsin.</p>
-        </div>
-        <button id="save-btn" class="button button-outline" disabled>Rekoru Kaydet</button>
-      </section>
+          <article class="stat-card">
+            <span class="stat-label">SON DENEME</span>
+            <strong id="last-stat">—</strong>
+            <small>ms</small>
+          </article>
 
-      <section class="history-section">
+          <article class="stat-card">
+            <span class="stat-label">KİŞİSEL REKOR</span>
+            <strong id="best-stat">—</strong>
+            <small>ms</small>
+          </article>
+        </section>
+
+        <section class="save-card">
+          <div class="save-symbol">✧</div>
+          <div>
+            <h3>Rekorunu sakla</h3>
+            <p id="save-description">
+              Rekorunu buluta kaydetmek için giriş yap.
+              Üye olmadan da test çözebilirsin.
+            </p>
+          </div>
+          <button id="save-btn" class="button button-outline" disabled>
+            Rekoru Kaydet
+          </button>
+        </section>
+
+        <section class="history-section">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">PERFORMANS TAKİBİ</p>
+              <h3>Deneme geçmişi</h3>
+            </div>
+            <button id="clear-history-btn" class="text-button">
+              Geçmişi temizle
+            </button>
+          </div>
+
+          <div id="history-list" class="history-list">
+            <p class="empty-history">
+              Henüz tamamlanmış bir testin yok. İlk denemeni yap!
+            </p>
+          </div>
+        </section>
+      </div>
+
+      <!-- AIM LABORATUVARI -->
+      <section id="aim-view" class="aim-view" hidden>
         <div class="section-heading">
           <div>
-            <p class="eyebrow">PERFORMANS TAKİBİ</p>
-            <h3>Deneme geçmişi</h3>
+            <p class="eyebrow">KAUREFLEX TRAINING</p>
+            <h3>Aim Laboratuvarı</h3>
+            <p class="intro">
+              Hedefleri yakala, isabet oranını ve hızını geliştir.
+            </p>
           </div>
-          <button id="clear-history-btn" class="text-button">Geçmişi temizle</button>
         </div>
-        <div id="history-list" class="history-list">
-          <p class="empty-history">Henüz tamamlanmış bir testin yok. İlk denemeni yap!</p>
-        </div>
+
+        <section class="aim-card">
+
+          <div class="aim-heading">
+            <div>
+              <p class="eyebrow">OYUN MODU</p>
+              <h3>Zorluk Seviyesi</h3>
+            </div>
+            <span class="aim-duration">30 SANİYE</span>
+          </div>
+
+          <div class="aim-difficulties">
+            <button class="difficulty-btn easy active" data-difficulty="easy" type="button">
+              <strong>KOLAY</strong>
+              <small>Başlangıç</small>
+            </button>
+
+            <button class="difficulty-btn medium" data-difficulty="medium" type="button">
+              <strong>ORTA</strong>
+              <small>Gelişen</small>
+            </button>
+
+            <button class="difficulty-btn hard" data-difficulty="hard" type="button">
+              <strong>ZOR</strong>
+              <small>Uzman</small>
+            </button>
+          </div>
+
+          <div class="aim-stats">
+            <div class="aim-stat">
+              <small>SKOR</small>
+              <strong id="aim-score">0</strong>
+            </div>
+
+            <div class="aim-stat">
+              <small>KALAN SÜRE</small>
+              <strong id="aim-time">30</strong>
+            </div>
+
+            <div class="aim-stat">
+              <small>İSABET</small>
+              <strong id="aim-hits">0</strong>
+            </div>
+
+            <div class="aim-stat">
+              <small>DOĞRULUK</small>
+              <strong id="aim-accuracy">%0</strong>
+            </div>
+          </div>
+
+          <div class="aim-board-wrapper">
+            <div id="aim-grid" class="aim-grid"
+              role="group" aria-label="5'e 5 Aim Laboratuvarı oyun alanı">
+              <!-- 25 hücre JavaScript tarafından oluşturulacak -->
+            </div>
+          </div>
+
+          <p id="aim-status" class="status-message" role="status" aria-live="polite">
+            Bir zorluk seç ve oyuna başla!
+          </p>
+
+          <div class="aim-controls">
+            <button id="aim-start-btn" class="button button-primary start-button" type="button">
+              Oyuna Başla
+            </button>
+          </div>
+
+          <p class="keyboard-hint">
+            Mor hedeflere fareyle veya dokunarak tıkla.
+          </p>
+        </section>
+
+        <section class="aim-info">
+          <div class="save-symbol">✦</div>
+          <div>
+            <h3>Aim Laboratuvarı nasıl oynanır?</h3>
+            <p>
+              5×5 alanda beliren neon mor hedeflere olabildiğince hızlı tıkla.
+              Süre bitmeden ne kadar çok hedef vurursan skorun o kadar yükselir.
+            </p>
+          </div>
+        </section>
       </section>
     </div>
 
@@ -107,14 +283,18 @@
           <p class="eyebrow">KAUREFLEX HESABI</p>
           <h3>Profilim</h3>
         </div>
-        <button id="back-home-btn" class="button button-outline">← Ana Sayfa</button>
+        <button id="back-home-btn" class="button button-outline">
+          ← Ana Sayfa
+        </button>
       </div>
 
       <div class="profile-card">
         <div class="profile-avatar">K</div>
         <h2 id="profile-username">Kullanıcı</h2>
         <p id="profile-email" class="profile-email">e-posta</p>
-        <p class="profile-joined">Üyelik tarihi: <span id="profile-joined">—</span></p>
+        <p class="profile-joined">
+          Üyelik tarihi: <span id="profile-joined">—</span>
+        </p>
       </div>
 
       <div class="profile-stats">
@@ -123,16 +303,19 @@
           <strong id="profile-best-average">—</strong>
           <small>ms</small>
         </article>
+
         <article class="stat-card">
           <span class="stat-label">GENEL ORTALAMA</span>
           <strong id="profile-average">—</strong>
           <small>ms</small>
         </article>
+
         <article class="stat-card">
           <span class="stat-label">EN HIZLI TEPKİ</span>
           <strong id="profile-fastest">—</strong>
           <small>ms</small>
         </article>
+
         <article class="stat-card">
           <span class="stat-label">TAMAMLANAN TEST</span>
           <strong id="profile-test-count">0</strong>
@@ -143,16 +326,19 @@
       <p id="profile-note" class="status-message"></p>
 
       <div class="profile-actions">
-        <button id="profile-logout-btn" class="button button-ghost">Çıkış Yap</button>
+        <button id="profile-logout-btn" class="button button-ghost">
+          Çıkış Yap
+        </button>
       </div>
     </section>
 
     <footer>
-      <span>KAUREFLEX <span class="footer-dot">•</span> V2</span>
+      <span>KAUREFLEX <span class="footer-dot">•</span> V3</span>
       <span>Tepki süresi cihazına ve ekranına göre değişebilir.</span>
     </footer>
   </main>
 
+  <!-- HESAP PENCERESİ -->
   <dialog id="account-dialog" class="account-dialog">
     <form method="dialog" class="dialog-close-row">
       <button class="close-button" aria-label="Kapat">×</button>
@@ -160,25 +346,39 @@
 
     <p class="eyebrow">KAUREFLEX HESABI</p>
     <h3 id="dialog-title">Giriş Yap</h3>
-    <p id="dialog-copy" class="dialog-copy">Hesabına giriş yap ve rekorlarını bulutta sakla.</p>
+    <p id="dialog-copy" class="dialog-copy">
+      Hesabına giriş yap ve rekorlarını bulutta sakla.
+    </p>
 
     <label id="username-label" for="username-input" hidden>Kullanıcı adı</label>
-    <input id="username-input" maxlength="24" autocomplete="username" placeholder="Kullanıcı adı" hidden>
+    <input id="username-input" maxlength="24" autocomplete="username"
+      placeholder="Kullanıcı adı" hidden>
 
     <label for="email-input">E-posta</label>
-    <input id="email-input" type="email" autocomplete="email" placeholder="ornek@eposta.com">
+    <input id="email-input" type="email" autocomplete="email"
+      placeholder="ornek@eposta.com">
 
     <label for="password-input">Şifre</label>
-    <input id="password-input" type="password" autocomplete="current-password" placeholder="En az 8 karakter">
+    <input id="password-input" type="password" autocomplete="current-password"
+      placeholder="En az 8 karakter">
 
-    <button id="forgot-btn" class="text-button forgot-button" type="button">Şifremi unuttum</button>
+    <button id="forgot-btn" class="text-button forgot-button" type="button">
+      Şifremi unuttum
+    </button>
+
     <p id="dialog-error" class="dialog-error" aria-live="polite"></p>
 
-    <button id="confirm-account-btn" class="button button-primary dialog-submit" type="button">Giriş Yap</button>
-    <button id="switch-mode-btn" class="text-button switch-button" type="button">Hesabın yok mu? Kayıt ol</button>
+    <button id="confirm-account-btn" class="button button-primary dialog-submit" type="button">
+      Giriş Yap
+    </button>
+
+    <button id="switch-mode-btn" class="text-button switch-button" type="button">
+      Hesabın yok mu? Kayıt ol
+    </button>
   </dialog>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="script.js"></script>
 </body>
-</html>
+            </html>
+            
