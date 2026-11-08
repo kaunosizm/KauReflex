@@ -2116,6 +2116,411 @@ $("friend-search-input").addEventListener(
     }
   }
 );
+
+/* =========================================
+   KAUREFLEX V5 - DÜELLO SİSTEMİ
+========================================= */
+
+let duelRoomId = null;
+let duelChannel = null;
+let duelStageStartedFor = null;
+let duelSubmitting = false;
+let currentDuelStage = 0;
+
+const DUEL_DIFFICULTIES = {
+  1: "easy",
+  2: "medium",
+  3: "hard"
+};
+
+function setDuelMessage(text, error = false) {
+  const el = $("duel-message");
+  if (!el) return;
+
+  el.textContent = text;
+  el.style.color = error ? "#ff8585" : "#8fffc7";
+}
+
+function setLobbyMessage(text) {
+  setText("lobby-status", text);
+}
+
+function getDuelRoomId(data) {
+  if (typeof data === "string") return data;
+  if (Array.isArray(data)) data = data[0];
+
+  return data?.room_id || data?.id || data?.create_duel_room || data?.join_duel_room || null;
+}
+
+async function createDuelRoom() {
+  if (!currentUser) {
+    setDuelMessage("Düello için önce giriş yapmalısın.", true);
+    return;
+  }
+
+  const button = $("create-duel-btn");
+  button.disabled = true;
+
+  try {
+    const { data, error } = await supabase.rpc(
+      "create_duel_room"
+    );
+
+    if (error) throw error;
+
+    const roomId = getDuelRoomId(data);
+
+    if (!roomId) {
+      throw new Error("Oda kimliği alınamadı.");
+    }
+
+    await enterDuelRoom(roomId);
+
+  } catch (error) {
+    console.error("Oda oluşturma hatası:", error);
+    setDuelMessage(error.message || "Oda oluşturulamadı.", true);
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function joinDuelRoom() {
+  if (!currentUser) {
+    setDuelMessage("Düello için önce giriş yapmalısın.", true);
+    return;
+  }
+
+  const code = $("duel-code-input").value
+    .trim()
+    .toUpperCase();
+
+  if (code.length !== 6) {
+    setDuelMessage("6 haneli oda kodunu gir.", true);
+    return;
+  }
+
+  const button = $("join-duel-btn");
+  button.disabled = true;
+
+  try {
+    const { data, error } = await supabase.rpc(
+      "join_duel_room",
+      { p_code: code }
+    );
+
+    if (error) throw error;
+
+    const roomId = getDuelRoomId(data);
+
+    if (!roomId) {
+      throw new Error("Oda kimliği alınamadı.");
+    }
+
+    await enterDuelRoom(roomId);
+
+  } catch (error) {
+    console.error("Odaya katılma hatası:", error);
+    setDuelMessage(error.message || "Odaya katılınamadı.", true);
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function enterDuelRoom(roomId) {
+  duelRoomId = roomId;
+  duelStageStartedFor = null;
+  currentDuelStage = 0;
+
+  $("duel-lobby").hidden = false;
+  $("duel-player-list").replaceChildren();
+
+  await refreshDuelRoom();
+
+  if (duelChannel) {
+    await supabase.removeChannel(duelChannel);
+  }
+
+  duelChannel = supabase
+    .channel("duel-" + roomId)
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "duel_rooms",
+        filter: "id=eq." + roomId
+      },
+      refreshDuelRoom
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "duel_players",
+        filter: "room_id=eq." + roomId
+      },
+      refreshDuelRoom
+    )
+    .subscribe();
+
+  setDuelMessage("Düello odasına bağlandın!");
+}
+
+async function refreshDuelRoom() {
+  if (!duelRoomId || !currentUser) return;
+
+  try {
+    const { data, error } = await supabase.rpc(
+      "get_duel_room_state",
+      { p_room_id: duelRoomId }
+    );
+
+    if (error) throw error;
+
+    const room = data.room;
+    const players = data.players || [];
+
+    $("duel-lobby").hidden = false;
+
+    setText("duel-room-code", room.code);
+
+    const list = $("duel-player-list");
+    list.replaceChildren();
+
+    players.forEach((player, index) => {
+      const row = document.createElement("div");
+      row.className = "social-user-row";
+
+      const host = player.user_id === room.host_id
+        ? " 👑"
+        : "";
+
+      const completed = player.completed_stages || 0;
+
+      row.textContent =
+        `${index + 1}. @${player.username || "Kullanıcı"}${host} · ${completed}/3 aşama`;
+
+      list.append(row);
+    });
+
+    const isHost = room.host_id === currentUser.id;
+
+    $("start-duel-btn").hidden =
+      !isHost || room.status !== "waiting";
+
+    $("start-duel-btn").disabled =
+      players.length < 2;
+
+    if (room.status === "waiting") {
+      setLobbyMessage(
+        players.length < 2
+          ? "Başlamak için en az 2 oyuncu gerekiyor."
+          : "Oyuncular hazır. Oda sahibi düelloyu başlatabilir."
+      );
+      return;
+    }
+
+    if (room.status === "finished") {
+      const winner = players.find(
+        p => p.user_id === room.winner_id
+      );
+
+      setLobbyMessage(
+        winner
+          ? `🏆 Kazanan: @${winner.username} · 800 XP kazandı!`
+          : "Düello tamamlandı!"
+      );
+
+      return;
+    }
+
+    if (room.status === "active") {
+      const myPlayer = players.find(
+        p => p.user_id === currentUser.id
+      );
+
+      if (!myPlayer) return;
+
+      const stage = Number(room.current_stage);
+      currentDuelStage = stage;
+
+      if (myPlayer.completed_stages >= stage) {
+        setLobbyMessage(
+          `${stage}. aşamayı tamamladın. Diğer oyuncular bekleniyor...`
+        );
+        return;
+      }
+
+      if (duelStageStartedFor !== stage && !aimRunning) {
+        startDuelStage(stage);
+      }
+    }
+
+  } catch (error) {
+    console.error("Düello odası yenilenemedi:", error);
+    setLobbyMessage(error.message || "Oda bilgileri alınamadı.");
+  }
+}
+
+async function startDuel() {
+  if (!duelRoomId) return;
+
+  const button = $("start-duel-btn");
+  button.disabled = true;
+
+  try {
+    const { error } = await supabase.rpc(
+      "start_duel_room",
+      { p_room_id: duelRoomId }
+    );
+
+    if (error) throw error;
+
+    await refreshDuelRoom();
+
+  } catch (error) {
+    console.error("Düello başlatılamadı:", error);
+    setLobbyMessage(error.message || "Düello başlatılamadı.");
+  } finally {
+    button.disabled = false;
+  }
+}
+
+function startDuelStage(stage) {
+  if (!DUEL_DIFFICULTIES[stage]) return;
+
+  duelStageStartedFor = stage;
+  currentDuelStage = stage;
+
+  aimDifficulty = DUEL_DIFFICULTIES[stage];
+
+  showAim();
+
+  document.querySelectorAll(".difficulty-btn").forEach(button => {
+    button.disabled = true;
+    button.classList.toggle(
+      "active",
+      button.dataset.difficulty === aimDifficulty
+    );
+  });
+
+  setText(
+    "aim-status",
+    `DÜELLO ${stage}/3 · ${AIM_LEVELS[aimDifficulty].name.toUpperCase()} AŞAMASI`
+  );
+
+  startAim();
+}
+
+async function submitDuelStage(hits, attempts) {
+  if (!duelRoomId || duelSubmitting || !currentDuelStage) return;
+
+  duelSubmitting = true;
+
+  const stage = currentDuelStage;
+
+  setText(
+    "aim-status",
+    `${stage}. aşama gönderiliyor...`
+  );
+
+  try {
+    const { data, error } = await supabase.rpc(
+      "submit_duel_stage",
+      {
+        p_room_id: duelRoomId,
+        p_stage: stage,
+        p_hits: hits,
+        p_attempts: attempts
+      }
+    );
+
+    if (error) throw error;
+
+    duelStageStartedFor = null;
+
+    if (data?.finished) {
+      setText(
+        "aim-status",
+        "DÜELLO TAMAMLANDI! Sonuçlar hesaplandı."
+      );
+    } else {
+      setText(
+        "aim-status",
+        "Aşama tamamlandı! Diğer oyuncular bekleniyor..."
+      );
+    }
+
+    await refreshDuelRoom();
+
+  } catch (error) {
+    console.error("Düello skoru gönderilemedi:", error);
+    setText(
+      "aim-status",
+      "Skor gönderilemedi: " + error.message
+    );
+  } finally {
+    duelSubmitting = false;
+  }
+}
+
+async function leaveDuelRoom() {
+  if (!duelRoomId) return;
+
+  try {
+    const { error } = await supabase.rpc(
+      "leave_duel_room",
+      { p_room_id: duelRoomId }
+    );
+
+    if (error) throw error;
+
+    if (duelChannel) {
+      await supabase.removeChannel(duelChannel);
+      duelChannel = null;
+    }
+
+    duelRoomId = null;
+    duelStageStartedFor = null;
+    currentDuelStage = 0;
+
+    $("duel-lobby").hidden = true;
+    setDuelMessage("Odadan ayrıldın.");
+
+  } catch (error) {
+    setDuelMessage(error.message || "Odadan ayrılamadın.", true);
+  }
+}
+
+/* DÜELLO BUTONLARI */
+
+$("create-duel-btn").addEventListener(
+  "click",
+  createDuelRoom
+);
+
+$("join-duel-btn").addEventListener(
+  "click",
+  joinDuelRoom
+);
+
+$("duel-code-input").addEventListener(
+  "keydown",
+  event => {
+    if (event.key === "Enter") joinDuelRoom();
+  }
+);
+
+$("start-duel-btn").addEventListener(
+  "click",
+  startDuel
+);
+
+$("leave-duel-btn").addEventListener(
+  "click",
+  leaveDuelRoom
+);
    
 initialize();
 
