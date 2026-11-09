@@ -43,7 +43,8 @@ let startedAt = 0;
 let currentUser = null;
 let username = "";
 let profileRoleName = "";
-const ADMIN_USER_ID = "b5e7f163-c645-4b69-a330-644c4e0ec81f";
+const ADMIN_USER_IDS = ["b5e7f163-c645-4b69-a330-644c4e0ec81f", "852172f9-19ca-4b74-9ba3-f88eb5151d1a"];
+const isAdminUser = user => !!user && ADMIN_USER_IDS.includes(user.id);
 let best = null;
 let history = [];
 let authMode = "login";
@@ -275,7 +276,7 @@ function profileUI() {
   if ($("logout-btn")) $("logout-btn").hidden = !loggedIn;
   if ($("profile-btn")) $("profile-btn").hidden = !loggedIn;
   if ($("profile-search-nav-btn")) $("profile-search-nav-btn").hidden = !loggedIn;
-  const isAdmin = !!currentUser && currentUser.id === ADMIN_USER_ID;
+  const isAdmin = !!currentUser && isAdminUser(currentUser);
   if ($("nav-admin")) $("nav-admin").hidden = !isAdmin;
 
   setText(
@@ -1615,7 +1616,7 @@ function setAdminRoleMessage(text, isError = false) {
 }
 
 async function saveUserRole(clearRole = false) {
-  if (!currentUser || currentUser.id !== ADMIN_USER_ID) {
+  if (!currentUser || !isAdminUser(currentUser)) {
     setAdminRoleMessage("Bu işlem için yetkin yok.", true);
     return;
   }
@@ -1983,7 +1984,7 @@ async function initialize() {
 ========================================= */
 
 function showAdminPage() {
-  if (!currentUser || currentUser.id !== ADMIN_USER_ID) {
+  if (!currentUser || !isAdminUser(currentUser)) {
     alert("Bu sayfaya erişim yetkin yok.");
     return;
   }
