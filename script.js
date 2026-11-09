@@ -1611,14 +1611,69 @@ async function saveUserRole(clearRole = false) {
 
   const saveButton = $("admin-role-save-btn");
   const clearButton = $("admin-role-clear-btn");
+
   if (saveButton) saveButton.disabled = true;
   if (clearButton) clearButton.disabled = true;
 
   try {
-    const { data: matches, error: lookupError } = await supabase
-  .rpc("admin_find_user", {
-    p_username: targetUsername
-  });
+    const { data: matches, error: lookupError } =
+      await supabase.rpc("admin_find_user", {
+        p_username: targetUsername
+      });
+
+    if (lookupError) throw lookupError;
+
+    if (!matches || matches.length === 0) {
+      throw new Error("Bu kullanıcı adıyla bir profil bulunamadı.");
+    }
+
+    if (matches.length > 1) {
+      throw new Error("Birden fazla kullanıcı bulundu.");
+    }
+
+    const targetProfile = {
+      id: matches[0].user_id,
+      username: matches[0].username
+    };
+
+    const { error: roleError } = await supabase.rpc(
+      "set_user_role",
+      {
+        p_user_id: targetProfile.id,
+        p_role: roleName
+      }
+    );
+
+    if (roleError) throw roleError;
+
+    setAdminRoleMessage(
+      clearRole
+        ? `@${targetProfile.username} kullanıcısının rolü kaldırıldı.`
+        : `@${targetProfile.username} kullanıcısına "${roleName}" rolü verildi.`
+    );
+
+    if (targetProfile.id === currentUser.id) {
+      profileRoleName = roleName;
+      renderProfile();
+    }
+
+    if (!clearRole) {
+      $("admin-role-name").value = "";
+    }
+
+  } catch (error) {
+    console.error("Rol güncelleme hatası:", error);
+
+    setAdminRoleMessage(
+      error.message || "Rol güncellenemedi.",
+      true
+    );
+
+  } finally {
+    if (saveButton) saveButton.disabled = false;
+    if (clearButton) clearButton.disabled = false;
+  }
+} 
 
 if (lookupError) throw lookupError;
 
