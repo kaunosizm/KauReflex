@@ -1297,20 +1297,46 @@ async function loadCloudData() {
   try {
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
-      .select("username,role_name")
+      .select("username")
       .eq("id", userId)
       .maybeSingle();
 
     if (currentUser?.id !== userId) return;
 
-    if (!profileError && profile) {
-      if (profile.username) username = profile.username;
-      profileRoleName = profile.role_name || "";
+    if (!profileError && profile?.username) {
+      username = profile.username;
     } else if (profileError) {
-      console.warn(
-        "Profil kullanıcı adı okunamadı:",
-        profileError
-      );
+      console.warn("Profil kullanıcı adı okunamadı:", profileError);
+    }
+
+    // Rol bilgisini RLS politikalarından bağımsız, yalnızca
+    // oturum açmış kullanıcının kendi rolünü döndüren RPC'den al.
+    const { data: ownRole, error: roleReadError } = await supabase.rpc(
+      "get_my_profile_role"
+    );
+
+    if (currentUser?.id !== userId) return;
+
+    if (!roleReadError) {
+      profileRoleName = ownRole || "";
+    } else {
+      console.warn("Profil rolü RPC ile okunamadı:", roleReadError);
+
+      // Eski kurulumlar için güvenli geri dönüş.
+      const { data: fallbackProfile, error: fallbackError } = await supabase
+        .from("profiles")
+        .select("role_name")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if (currentUser?.id !== userId) return;
+
+      if (!fallbackError && fallbackProfile) {
+        profileRoleName = fallbackProfile.role_name || "";
+      } else if (fallbackError) {
+        console.error("Profil rolü okunamadı:", fallbackError);
+        profileRoleName = "";
+      }
     }
 
     const { data, error } = await supabase
