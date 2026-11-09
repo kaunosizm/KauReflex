@@ -2411,10 +2411,10 @@ async function loadChatMessages() {
     }
 
     const senderIds = [...new Set(data.map(item => item.sender_id))];
-    const { data: profiles, error: profilesError } = await supabase
-      .from("profiles")
-      .select("id, username")
-      .in("id", senderIds);
+    const { data: profiles, error: profilesError } = await supabase.rpc(
+      "chat_get_usernames",
+      { p_user_ids: senderIds }
+    );
     if (profilesError) console.warn("Sohbet kullanıcı adları alınamadı:", profilesError.message);
     const names = new Map((profiles || []).map(item => [item.id, item.username]));
 
