@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#080611">
   <meta name="description" content="KauReflex ile refleksini ölç, Aim Laboratuvarı'nda nişan alma hızını ve CPS Ölçer ile tıklama hızını geliştir.">
   <title>KauReflex — Refleks ve Aim Merkezi</title>
-  <link rel="stylesheet" href="style.css?v=20261109-profilesearch">
+  <link rel="stylesheet" href="style.css?v=20261109-profiles-top">
 </head>
 <body>
   <div class="ambient ambient-one"></div>
@@ -93,6 +93,10 @@
 
       <button class="button button-primary small" id="register-btn">
         Kayıt Ol
+      </button>
+
+      <button class="button button-ghost" id="profile-search-nav-btn" hidden>
+        ◉ Profilleri Ara
       </button>
 
       <button class="button button-ghost" id="friends-btn" hidden>
@@ -547,23 +551,6 @@
         </div>
       </section>
 
-      <!-- PROFİL ARAMA SONUCU -->
-      <section id="public-profile-card" class="social-card public-profile-card" hidden>
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">KAUREFLEX MEMBER</p>
-            <h3>Üye Profili</h3>
-          </div>
-          <button id="close-public-profile-btn" class="button button-outline" type="button">Kapat</button>
-        </div>
-        <div class="public-profile-content">
-          <div class="profile-avatar public-profile-avatar">K</div>
-          <h2 id="public-profile-username">@kullanıcı</h2>
-          <p id="public-profile-role" class="profile-role" hidden></p>
-          <p class="public-profile-caption">KauReflex üyesi</p>
-        </div>
-      </section>
-
       <!-- GELEN İSTEKLER -->
       <section class="social-card">
         <h3>Arkadaşlık İstekleri</h3>
@@ -702,6 +689,39 @@
 
     </section>
 
+    <!-- BAĞIMSIZ PROFİL ARAMA -->
+    <section id="profile-search-page" class="profile-search-page" hidden>
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">KAUREFLEX COMMUNITY</p>
+          <h3>Profilleri Keşfet</h3>
+          <p class="intro">Kullanıcı adını arat, üyelerin profillerini görüntüle.</p>
+        </div>
+        <button id="profile-search-back-btn" class="button button-outline" type="button">← Ana Sayfa</button>
+      </div>
+      <section class="social-card">
+        <h3>Kullanıcı Ara</h3>
+        <p>Aramak istediğin kişinin kullanıcı adını yaz.</p>
+        <div class="social-search">
+          <input id="profile-search-input" type="text" maxlength="24" placeholder="Kullanıcı adı" autocomplete="off">
+          <button id="profile-search-btn" class="button button-primary" type="button">Ara</button>
+        </div>
+        <div id="profile-search-results"><p class="social-empty">Arama sonuçları burada görünecek.</p></div>
+      </section>
+      <section id="public-profile-card" class="social-card public-profile-card" hidden>
+        <div class="section-heading">
+          <div><p class="eyebrow">KAUREFLEX MEMBER</p><h3>Üye Profili</h3></div>
+          <button id="close-public-profile-btn" class="button button-outline" type="button">Kapat</button>
+        </div>
+        <div class="public-profile-content">
+          <div class="profile-avatar public-profile-avatar">K</div>
+          <h2 id="public-profile-username">@kullanıcı</h2>
+          <p id="public-profile-role" class="profile-role" hidden></p>
+          <p class="public-profile-caption">KauReflex üyesi</p>
+        </div>
+      </section>
+    </section>
+
     <!-- YÖNETİCİ PANELİ -->
     <section id="admin-page" class="admin-page" hidden>
       <div class="section-heading">
@@ -806,7 +826,7 @@
   </dialog>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="script.js?v=20261109-profilesearch"></script>
+  <script src="script.js?v=20261109-profiles-top"></script>
 
 </body>
 </html>
