@@ -1690,3 +1690,48 @@ footer{
   max-width: 680px;
   margin: 0 auto;
 }
+
+
+/* PROFİL ARAMA */
+.profile-search-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-left: auto;
+}
+.profile-search-actions .button {
+  white-space: nowrap;
+}
+.public-profile-card {
+  border-color: rgba(184,92,255,.35);
+  background:
+    radial-gradient(ellipse at top,rgba(144,65,210,.15),transparent 70%),
+    rgba(255,255,255,.025);
+}
+.public-profile-content {
+  padding: 12px 0 5px;
+  text-align: center;
+}
+.public-profile-avatar {
+  margin-bottom: 14px;
+}
+.public-profile-content h2 {
+  margin: 0;
+  color: #f2e5ff;
+  font-size: 24px;
+  overflow-wrap: anywhere;
+}
+.public-profile-caption {
+  margin: 9px 0 0;
+  color: #9d91aa;
+  font-size: 12px;
+}
+@media(max-width:600px) {
+  .profile-search-actions {
+    width: 100%;
+    margin: 12px 0 0;
+  }
+  .profile-search-actions .button {
+    flex: 1;
+  }
+}
