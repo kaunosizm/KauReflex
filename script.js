@@ -2104,9 +2104,21 @@ async function searchFriends() {
       "@" + profile.username
     );
 
-    const button = makeSocialElement(
+    const actions = makeSocialElement("div", "profile-search-actions");
+
+    const profileButton = makeSocialElement(
       "button",
       "button button-outline",
+      "Profili Gör"
+    );
+    profileButton.type = "button";
+    profileButton.addEventListener("click", () => {
+      viewPublicProfile(profile.username);
+    });
+
+    const button = makeSocialElement(
+      "button",
+      "button button-primary",
       "Arkadaş Ekle"
     );
 
@@ -2131,10 +2143,62 @@ async function searchFriends() {
       await loadFriendships();
     });
 
-    row.append(name, button);
+    actions.append(profileButton, button);
+    row.append(name, actions);
     results.append(row);
   });
 }
+
+async function viewPublicProfile(targetUsername) {
+  const card = $("public-profile-card");
+  const usernameElement = $("public-profile-username");
+  const roleElement = $("public-profile-role");
+
+  if (!currentUser) {
+    openDialog("login");
+    return;
+  }
+
+  card.hidden = false;
+  usernameElement.textContent = "@" + targetUsername;
+  roleElement.hidden = true;
+  roleElement.textContent = "";
+
+  const { data, error } = await supabase.rpc(
+    "get_public_profile",
+    { p_username: targetUsername }
+  );
+
+  if (error) {
+    console.error("Profil görüntüleme hatası:", error);
+    usernameElement.textContent = "Profil yüklenemedi";
+    socialMessage("Profil bilgileri alınamadı: " + error.message, true);
+    return;
+  }
+
+  const profile = Array.isArray(data) ? data[0] : data;
+  if (!profile) {
+    usernameElement.textContent = "Kullanıcı bulunamadı";
+    return;
+  }
+
+  usernameElement.textContent = "@" + profile.username;
+  const avatar = card.querySelector(".public-profile-avatar");
+  if (avatar) {
+    avatar.textContent = (profile.username || "K").charAt(0).toUpperCase();
+  }
+
+  if (profile.role_name) {
+    roleElement.textContent = profile.role_name;
+    roleElement.hidden = false;
+  }
+
+  card.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+$("close-public-profile-btn").addEventListener("click", () => {
+  $("public-profile-card").hidden = true;
+});
 
 /* ARKADAŞLARI VE İSTEKLERİ YÜKLE */
 
