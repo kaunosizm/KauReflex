@@ -1753,3 +1753,60 @@ footer{
  .profile-search-page .social-search { flex-direction:column; }
  .profile-search-page .social-user-row { flex-wrap:wrap; }
 }
+
+
+/* =========================================
+   KAUREFLEX V6 — CANLI SOHBET
+========================================= */
+.chat-page{width:100%;max-width:1100px;margin:0 auto;padding:30px 0 60px}
+.chat-page>.section-heading{align-items:center;margin-bottom:22px}
+.chat-layout{display:grid;grid-template-columns:minmax(230px,290px) minmax(0,1fr);gap:16px;align-items:stretch}
+.chat-sidebar,.chat-window{min-width:0;border:1px solid rgba(184,92,255,.2);border-radius:17px;background:linear-gradient(145deg,rgba(28,20,43,.94),rgba(13,10,23,.96));box-shadow:0 12px 35px rgba(0,0,0,.18)}
+.chat-sidebar{padding:14px}
+.chat-room-button,.chat-conversation-button{width:100%;display:flex;align-items:center;gap:11px;padding:13px;border:1px solid transparent;border-radius:12px;background:rgba(255,255,255,.035);color:#eee;cursor:pointer;text-align:left}
+.chat-room-button.active,.chat-conversation-button.active{border-color:rgba(184,92,255,.5);background:rgba(184,92,255,.13)}
+.chat-room-button>span:first-child{font-size:22px}
+.chat-room-button strong,.chat-room-button small,.chat-conversation-button strong,.chat-conversation-button small{display:block}
+.chat-room-button small,.chat-conversation-button small{margin-top:4px;color:#9d91aa;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chat-private-heading{margin:22px 4px 10px;color:#e3d2f5;font-size:13px}
+.chat-new-dm{display:grid;gap:8px}
+.chat-new-dm input,.chat-send-form input{width:100%;min-width:0;padding:12px 13px;border:1px solid rgba(184,92,255,.25);border-radius:10px;background:rgba(0,0,0,.25);color:#fff;outline:none}
+.chat-new-dm input:focus,.chat-send-form input:focus{border-color:#c47aff}
+.chat-new-dm .button{width:100%}
+.chat-conversation-list{display:grid;gap:8px;margin-top:12px}
+.chat-conversation-button{display:block}
+.chat-conversation-button strong{font-size:12px}
+.chat-window{display:flex;flex-direction:column;min-height:590px;overflow:hidden}
+.chat-window-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:17px 19px;border-bottom:1px solid rgba(255,255,255,.07)}
+.chat-window-heading strong,.chat-window-heading small{display:block}
+.chat-window-heading strong{color:#f0e4ff;font-size:15px}
+.chat-window-heading small{margin-top:5px;color:#988ba7;font-size:11px}
+.chat-connection-status{font-size:10px;color:#a99db8;white-space:nowrap}
+.chat-connection-status.connected{color:#70efb2}
+.chat-connection-status.disconnected{color:#ff8585}
+.chat-messages{display:flex;flex:1;flex-direction:column;gap:11px;min-height:360px;max-height:540px;overflow-y:auto;padding:18px;background:rgba(4,3,9,.25)}
+.chat-empty{margin:auto;color:#92869e;text-align:center;font-size:12px}
+.chat-message{max-width:82%;align-self:flex-start;padding:10px 13px;border:1px solid rgba(184,92,255,.15);border-radius:13px 13px 13px 4px;background:rgba(255,255,255,.045);overflow-wrap:anywhere}
+.chat-message.own{align-self:flex-end;border-color:rgba(184,92,255,.35);border-radius:13px 13px 4px 13px;background:rgba(145,70,205,.17)}
+.chat-message-meta{display:flex;align-items:center;gap:12px;margin-bottom:5px}
+.chat-message-meta strong{color:#d9baff;font-size:11px}
+.chat-message-meta time{color:#857991;font-size:9px}
+.chat-message-body{margin:0;color:#eee5f7;font-size:13px;line-height:1.55;white-space:pre-wrap}
+.chat-send-form{display:flex;gap:9px;padding:13px;border-top:1px solid rgba(255,255,255,.07)}
+.chat-send-form .button{flex:0 0 auto}
+.chat-status-message{min-height:18px;margin:0;padding:0 14px 10px;color:#b9a0d8;font-size:11px}
+@media(max-width:720px){
+ .chat-layout{grid-template-columns:1fr}
+ .chat-sidebar{padding:11px}
+ .chat-window{min-height:540px}
+ .chat-messages{min-height:330px;max-height:440px}
+ .chat-new-dm{grid-template-columns:minmax(0,1fr) auto}
+ .chat-new-dm .button{width:auto;white-space:nowrap}
+ .chat-page{padding-top:18px}
+}
+@media(max-width:420px){
+ .chat-window-heading{padding:14px}
+ .chat-message{max-width:92%}
+ .chat-send-form{padding:10px}
+ .chat-send-form .button{padding:10px 11px}
+}
