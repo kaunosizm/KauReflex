@@ -208,7 +208,7 @@ function renderProfile() {
 
   const adminPanel = $("admin-role-panel");
   if (adminPanel) {
-    adminPanel.hidden = currentUser.id !== ADMIN_USER_ID;
+    adminPanel.hidden = false;
   }
 
   const validHistory = history.filter(item =>
