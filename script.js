@@ -357,6 +357,7 @@ function openProfile() {
 function showReaction() {
   stopAim();
   stopCPS();
+  $("chat-page").hidden = true;
 
   $("home-view").hidden = false;
   $("profile-page").hidden = true;
@@ -374,6 +375,7 @@ function showReaction() {
 function showAim() {
   stopAim();
   stopCPS();
+  $("chat-page").hidden = true;
 
   $("home-view").hidden = false;
   $("profile-page").hidden = true;
@@ -396,6 +398,7 @@ function showAim() {
 function showCPS() {
   stopAim();
   stopCPS();
+  $("chat-page").hidden = true;
 
   $("home-view").hidden = false;
   $("profile-page").hidden = true;
@@ -2036,7 +2039,6 @@ async function showFriends() {
   $("admin-page").hidden = true;
   $("social-page").hidden = false;
   $("profile-search-page").hidden = true;
-  $("chat-page").hidden = true;
   $("chat-page").hidden = true;
 
   setActiveMenu("nav-friends");
