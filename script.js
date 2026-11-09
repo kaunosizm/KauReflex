@@ -1976,6 +1976,8 @@ function showAdminPage() {
   $("profile-page").hidden = true;
   $("social-page").hidden = true;
   $("admin-page").hidden = false;
+  const adminPanel = $("admin-role-panel");
+  if (adminPanel) adminPanel.hidden = false;
 
   setActiveMenu("nav-admin");
   closeMenu();
