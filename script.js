@@ -1615,15 +1615,25 @@ async function saveUserRole(clearRole = false) {
   if (clearButton) clearButton.disabled = true;
 
   try {
-    const { data: targetProfile, error: lookupError } = await supabase
-      .from("profiles")
-      .select("id,username")
-      .ilike("username", targetUsername)
-      .maybeSingle();
+    const { data: matches, error: lookupError } = await supabase
+  .rpc("admin_find_user", {
+    p_username: targetUsername
+  });
 
-    if (lookupError) throw lookupError;
-    if (!targetProfile) {
-      throw new Error("Bu kullanıcı adıyla bir profil bulunamadı.");
+if (lookupError) throw lookupError;
+
+if (!matches || matches.length === 0) {
+  throw new Error("Bu kullanıcı adıyla bir profil bulunamadı.");
+}
+
+if (matches.length > 1) {
+  throw new Error("Birden fazla kullanıcı bulundu.");
+}
+
+const targetProfile = {
+  id: matches[0].user_id,
+  username: matches[0].username
+};
     }
 
     const { error: roleError } = await supabase.rpc("set_user_role", {
