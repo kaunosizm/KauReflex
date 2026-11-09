@@ -488,6 +488,23 @@ function renderHistory() {
   });
 }
 
+
+/* TOP 100 LİDER TABLOLARI */
+const LEADERBOARD_CONFIG = {
+ reaction:{element:"reaction-leaderboard",rpc:"get_top100_reaction",format:v=>Math.round(Number(v))+" ms"},
+ aim:{element:"aim-leaderboard",rpc:"get_top100_aim",format:v=>Math.round(Number(v))+" puan"},
+ cps:{element:"cps-leaderboard",rpc:"get_top100_cps",format:v=>Number(v).toFixed(2)+" CPS"}
+};
+function renderLeaderboard(kind,rows,error){
+ const box=$(LEADERBOARD_CONFIG[kind].element); if(!box)return; box.replaceChildren();
+ if(error||!rows?.length){const p=document.createElement("p");p.className="leaderboard-empty";p.textContent=error?"Sıralama yüklenemedi.":"Henüz kayıtlı skor yok. İlk 100'e giren sen ol!";box.append(p);if(error)console.warn("Top100:",error);return;}
+ rows.forEach((entry,i)=>{const row=document.createElement("div");row.className="leaderboard-row"+(i<3?" podium podium-"+(i+1):"");const rank=document.createElement("span");rank.className="leaderboard-rank";rank.textContent=(entry.rank_no||i+1)+".";const name=document.createElement("strong");name.className="leaderboard-name";name.textContent="@"+(entry.username||"Üye");const score=document.createElement("span");score.className="leaderboard-score";score.textContent=LEADERBOARD_CONFIG[kind].format(entry.score);row.append(rank,name,score);box.append(row);});
+}
+async function loadTop100(kind=null){
+ const keys=kind?[kind]:Object.keys(LEADERBOARD_CONFIG);
+ await Promise.all(keys.map(async key=>{const {data,error}=await supabase.rpc(LEADERBOARD_CONFIG[key].rpc);renderLeaderboard(key,data||[],error);}));
+}
+
 /* =========================================
    TEPKİ TESTİNİ SIFIRLA
 ========================================= */
@@ -546,6 +563,7 @@ async function saveResult(average, bestRound) {
       "Rekorun başarıyla buluta kaydedildi!";
 
     await loadCloudData();
+    await loadTop100("reaction");
 
     return true;
 
@@ -1008,7 +1026,12 @@ function finishAim() {
 
     $("aim-start-btn").textContent = "Tekrar Oyna";
 
-   
+    if (currentUser) {
+      (async () => {
+        const { error } = await supabase.from("aim_results").insert({user_id:currentUser.id,score:finalScore,difficulty:aimDifficulty,hits:finalHits,accuracy,average_reaction_ms:averageReaction});
+        if (error) console.warn("Aim skoru kaydedilemedi:",error); else await loadTop100("aim");
+      })();
+    }
 }
 
 /* =========================================
@@ -1214,6 +1237,13 @@ function finishCPS() {
     "cps-status",
     `Test bitti! Ortalama hızın: ${averageCPS.toFixed(2)} CPS`
   );
+
+  if (currentUser) {
+    (async () => {
+      const { error } = await supabase.from("cps_results").insert({user_id:currentUser.id,total_clicks:totalClicks,duration_seconds:actualDuration,cps:Number(averageCPS.toFixed(2))});
+      if (error) console.warn("CPS skoru kaydedilemedi:",error); else await loadTop100("cps");
+    })();
+  }
 }
 
 /* =========================================
@@ -1388,6 +1418,8 @@ async function loadCloudData() {
     console.error("Bulut verileri yüklenemedi:", error);
   }
 }
+
+loadTop100();
 
 /* =========================================
    GİRİŞ / KAYIT / ŞİFRE YENİLEME
