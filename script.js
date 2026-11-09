@@ -206,11 +206,6 @@ function renderProfile() {
     roleElement.hidden = !profileRoleName;
   }
 
-  const adminPanel = $("admin-role-panel");
-  if (adminPanel) {
-    adminPanel.hidden = false;
-  }
-
   const validHistory = history.filter(item =>
     Number.isFinite(Number(item.average_ms ?? item.average))
   );
@@ -279,6 +274,8 @@ function profileUI() {
   if ($("register-btn")) $("register-btn").hidden = loggedIn;
   if ($("logout-btn")) $("logout-btn").hidden = !loggedIn;
   if ($("profile-btn")) $("profile-btn").hidden = !loggedIn;
+  const isAdmin = !!currentUser && currentUser.id === ADMIN_USER_ID;
+  if ($("nav-admin")) $("nav-admin").hidden = !isAdmin;
 
   setText(
     "save-description",
@@ -310,6 +307,7 @@ function showHome() {
   stopAim();
   stopCPS();
    $("social-page").hidden = true;
+  $("admin-page").hidden = true;
 
   $("home-view").hidden = false;
   $("profile-page").hidden = true;
@@ -328,6 +326,7 @@ function openProfile() {
   stopAim();
   stopCPS();
    $("social-page").hidden = true;
+  $("admin-page").hidden = true;
   closeMenu();
 
   $("home-view").hidden = true;
@@ -344,6 +343,8 @@ function showReaction() {
 
   $("home-view").hidden = false;
   $("profile-page").hidden = true;
+  $("social-page").hidden = true;
+  $("admin-page").hidden = true;
 
   $("reaction-view").hidden = false;
   $("aim-view").hidden = true;
@@ -359,6 +360,8 @@ function showAim() {
 
   $("home-view").hidden = false;
   $("profile-page").hidden = true;
+  $("social-page").hidden = true;
+  $("admin-page").hidden = true;
 
   $("reaction-view").hidden = true;
   $("aim-view").hidden = false;
@@ -379,6 +382,8 @@ function showCPS() {
 
   $("home-view").hidden = false;
   $("profile-page").hidden = true;
+  $("social-page").hidden = true;
+  $("admin-page").hidden = true;
 
   $("reaction-view").hidden = true;
   $("aim-view").hidden = true;
@@ -1611,24 +1616,32 @@ async function saveUserRole(clearRole = false) {
 
   const saveButton = $("admin-role-save-btn");
   const clearButton = $("admin-role-clear-btn");
-
   if (saveButton) saveButton.disabled = true;
   if (clearButton) clearButton.disabled = true;
 
   try {
-    const { data: matches, error: lookupError } =
-      await supabase.rpc("admin_find_user", {
-        p_username: targetUsername
-      });
-
-    const { error: roleError } = await supabase.rpc(
-      "set_user_role",
-      {
-        p_user_id: targetProfile.id,
-        p_role: roleName
-      }
+    const { data: matches, error: lookupError } = await supabase.rpc(
+      "admin_find_user",
+      { p_username: targetUsername }
     );
 
+    if (lookupError) throw lookupError;
+    if (!matches || matches.length === 0) {
+      throw new Error("Bu kullanıcı adıyla bir profil bulunamadı.");
+    }
+    if (matches.length > 1) {
+      throw new Error("Birden fazla kullanıcı bulundu.");
+    }
+
+    const targetProfile = {
+      id: matches[0].user_id,
+      username: matches[0].username
+    };
+
+    const { error: roleError } = await supabase.rpc("set_user_role", {
+      p_user_id: targetProfile.id,
+      p_role: roleName
+    });
     if (roleError) throw roleError;
 
     setAdminRoleMessage(
@@ -1641,86 +1654,8 @@ async function saveUserRole(clearRole = false) {
       profileRoleName = roleName;
       renderProfile();
     }
-
-    if (!clearRole) {
-      $("admin-role-name").value = "";
-    }
-
-  } catch (error) {
-    console.error("Rol güncelleme hatası:", error);
-
-    setAdminRoleMessage(
-      error.message || "Rol güncellenemedi.",
-      true
-    );
-
-  } finally {
-    if (saveButton) saveButton.disabled = false;
-    if (clearButton) clearButton.disabled = false;
-  }
-} 
-
-if (lookupError) throw lookupError;
-
-if (!matches || matches.length === 0) {
-  throw new Error("Bu kullanıcı adıyla bir profil bulunamadı.");
-}
-
-if (matches.length > 1) {
-  throw new Error("Birden fazla kullanıcı bulundu.");
-}
-
-const targetProfile = {
-  id: matches[0].user_id,
-  username: matches[0].username
-};
-    }
-
-    const { error: roleError } = await supabase.rpc("set_user_role", {
-      p_user_id: targetProfile.id,
-      p_role: roleName
-    });
-
-    try {
-  const { data: matches, error: lookupError } = await supabase
-    .rpc("admin_find_user", {
-      p_username: targetUsername
-    });
-
-  if (lookupError) throw lookupError;
-
-  if (!matches || matches.length === 0) {
-    throw new Error("Bu kullanıcı adıyla bir profil bulunamadı.");
-  }
-
-  if (matches.length > 1) {
-    throw new Error("Birden fazla kullanıcı bulundu.");
-  }
-
-  const targetProfile = {
-    id: matches[0].user_id,
-    username: matches[0].username
-  };
-
-  const { error: roleError } = await supabase.rpc("set_user_role", {
-    p_user_id: targetProfile.id,
-    p_role: roleName
-  });
-
-  if (roleError) throw roleError;
-
-    setAdminRoleMessage(
-      clearRole
-        ? `@${targetProfile.username} kullanıcısının rolü kaldırıldı.`
-        : `@${targetProfile.username} kullanıcısına “${roleName}” rolü verildi.`
-    );
-
-    if (targetProfile.id === currentUser.id) {
-      profileRoleName = roleName;
-      renderProfile();
-    }
-
     if (!clearRole) $("admin-role-name").value = "";
+
   } catch (error) {
     console.error("Rol güncelleme hatası:", error);
     setAdminRoleMessage(error.message || "Rol güncellenemedi.", true);
@@ -1935,6 +1870,7 @@ document.addEventListener("keydown", event => {
 
   if ($("account-dialog").open) return;
   if (!$("profile-page").hidden) return;
+  if (!$("admin-page").hidden) return;
   if ($("reaction-view").hidden) return;
   if (!$("aim-view").hidden) return;
   if (!$("cps-view").hidden) return;
@@ -2027,6 +1963,25 @@ async function initialize() {
    KAUREFLEX V5 — ARKADAŞLIK SİSTEMİ
 ========================================= */
 
+function showAdminPage() {
+  if (!currentUser || currentUser.id !== ADMIN_USER_ID) {
+    alert("Bu sayfaya erişim yetkin yok.");
+    return;
+  }
+
+  stopAim();
+  stopCPS();
+
+  $("home-view").hidden = true;
+  $("profile-page").hidden = true;
+  $("social-page").hidden = true;
+  $("admin-page").hidden = false;
+
+  setActiveMenu("nav-admin");
+  closeMenu();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
 async function showFriends() {
   if (!currentUser) {
     openDialog("login");
@@ -2038,6 +1993,7 @@ async function showFriends() {
 
   $("home-view").hidden = true;
   $("profile-page").hidden = true;
+  $("admin-page").hidden = true;
   $("social-page").hidden = false;
 
   setActiveMenu("nav-friends");
@@ -2278,6 +2234,9 @@ $("nav-friends").addEventListener(
   "click",
   showFriends
 );
+
+$("nav-admin").addEventListener("click", showAdminPage);
+$("admin-back-btn").addEventListener("click", showHome);
 
 $("friends-btn").addEventListener(
   "click",
