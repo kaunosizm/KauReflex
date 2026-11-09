@@ -267,6 +267,8 @@ function renderProfile() {
 
 function profileUI() {
   const loggedIn = !!currentUser;
+  const mobileNav = $("mobile-bottom-nav");
+  if (mobileNav) mobileNav.hidden = !loggedIn;
   const userLabel = $("user-label");
 
   const displayName = loggedIn
@@ -283,7 +285,6 @@ function profileUI() {
 
   if ($("login-btn")) $("login-btn").hidden = loggedIn;
   if ($("register-btn")) $("register-btn").hidden = loggedIn;
-  if ($("logout-btn")) $("logout-btn").hidden = !loggedIn;
   if ($("profile-btn")) $("profile-btn").hidden = !loggedIn;
   if ($("profile-search-nav-btn")) $("profile-search-nav-btn").hidden = !loggedIn;
   if ($("chat-btn")) $("chat-btn").hidden = !loggedIn;
@@ -438,6 +439,15 @@ function closeMenu() {
 }
 
 function setActiveMenu(id) {
+  const mobileMap = {
+    "nav-reaction": "mobile-nav-home",
+    "nav-friends": "mobile-nav-friends",
+    "nav-chat": "mobile-nav-chat",
+    "nav-profile": "mobile-nav-profile"
+  };
+  document.querySelectorAll(".mobile-nav-item").forEach(item => item.classList.remove("active"));
+  const mobileActive = mobileMap[id];
+  if (mobileActive && $(mobileActive)) $(mobileActive).classList.add("active");
   document.querySelectorAll(".menu-link").forEach(button => {
     button.classList.toggle("active", button.id === id);
   });
@@ -1755,15 +1765,26 @@ $("profile-btn").addEventListener(
   openProfile
 );
 
-$("logout-btn").addEventListener(
-  "click",
-  logout
-);
+function openLogoutConfirmation() {
+  $("logout-confirm-overlay").hidden = false;
+  $("logout-cancel-btn").focus();
+}
 
-$("profile-logout-btn").addEventListener(
-  "click",
-  logout
-);
+function closeLogoutConfirmation() {
+  $("logout-confirm-overlay").hidden = true;
+}
+
+$("profile-logout-btn").addEventListener("click", openLogoutConfirmation);
+$("logout-cancel-btn").addEventListener("click", closeLogoutConfirmation);
+$("logout-confirm-overlay").addEventListener("click", event => {
+  if (event.target === $("logout-confirm-overlay")) closeLogoutConfirmation();
+});
+$("logout-confirm-btn").addEventListener("click", async () => {
+  $("logout-confirm-btn").disabled = true;
+  await logout();
+  $("logout-confirm-btn").disabled = false;
+  closeLogoutConfirmation();
+});
 
 $("admin-role-save-btn").addEventListener("click", () => {
   saveUserRole(false);
@@ -2211,7 +2232,85 @@ async function viewPublicProfile(targetUsername) {
     roleElement.textContent = profile.role_name;
     roleElement.hidden = false;
   }
+  const friendButton = $("public-profile-friend-btn");
+  friendButton.hidden = profile.username === username;
+  friendButton.disabled = true;
+  friendButton.textContent = "Durum kontrol ediliyor...";
+  $("public-profile-friend-status").textContent = "";
+  await configurePublicProfileFriendButton(profile.username);
   card.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+async function configurePublicProfileFriendButton(targetUsername) {
+  const button = $("public-profile-friend-btn");
+  const status = $("public-profile-friend-status");
+  if (!currentUser || !targetUsername || targetUsername === username) {
+    button.hidden = true;
+    return;
+  }
+
+  const { data, error } = await supabase.rpc("list_friendships");
+  if (error) {
+    console.warn("Arkadaşlık durumu alınamadı:", error.message);
+    button.disabled = false;
+    button.textContent = "Arkadaş Ekle";
+    return;
+  }
+
+  const relation = (data || []).find(item =>
+    String(item.username || "").toLowerCase() === targetUsername.toLowerCase()
+  );
+
+  button.disabled = false;
+  button.onclick = null;
+
+  if (relation?.friendship_status === "accepted") {
+    button.textContent = "Arkadaşsınız";
+    button.disabled = true;
+    return;
+  }
+
+  if (relation?.friendship_status === "pending" && relation.direction === "outgoing") {
+    button.textContent = "İstek Gönderildi";
+    button.disabled = true;
+    return;
+  }
+
+  if (relation?.friendship_status === "pending" && relation.direction === "incoming") {
+    button.textContent = "İsteği Kabul Et";
+    button.onclick = async () => {
+      button.disabled = true;
+      const { error: acceptError } = await supabase.rpc("respond_friend_request", {
+        p_request_id: relation.request_id,
+        p_accept: true
+      });
+      if (acceptError) {
+        status.textContent = acceptError.message;
+        button.disabled = false;
+        return;
+      }
+      button.textContent = "Arkadaşsınız";
+      status.textContent = "Arkadaşlık isteği kabul edildi!";
+      await loadFriendships();
+    };
+    return;
+  }
+
+  button.textContent = "Arkadaş Ekle";
+  button.onclick = async () => {
+    button.disabled = true;
+    const { error: requestError } = await supabase.rpc("send_friend_request", {
+      p_username: targetUsername
+    });
+    if (requestError) {
+      status.textContent = requestError.message;
+      button.disabled = false;
+      return;
+    }
+    button.textContent = "İstek Gönderildi";
+    status.textContent = "Arkadaşlık isteği gönderildi!";
+    await loadFriendships();
+  };
 }
 
 $("close-public-profile-btn").addEventListener("click", () => {
@@ -2564,6 +2663,10 @@ $("nav-friends").addEventListener(
 
 $("nav-chat").addEventListener("click", showChatPage);
 $("chat-btn").addEventListener("click", showChatPage);
+$("mobile-nav-home").addEventListener("click", showHome);
+$("mobile-nav-friends").addEventListener("click", showFriends);
+$("mobile-nav-chat").addEventListener("click", showChatPage);
+$("mobile-nav-profile").addEventListener("click", openProfile);
 $("chat-back-btn").addEventListener("click", showHome);
 $("chat-global-btn").addEventListener("click", () => selectChatRoom("global"));
 $("chat-open-dm-btn").addEventListener("click", startPrivateChat);
