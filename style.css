@@ -1735,3 +1735,21 @@ footer{
     flex: 1;
   }
 }
+
+
+/* BAĞIMSIZ PROFİL ARAMA SAYFASI */
+.profile-search-page { width:100%; max-width:920px; margin:0 auto; }
+.profile-search-page .social-card { margin-top:22px; }
+.profile-search-page .social-search { display:flex; gap:10px; }
+.profile-search-page .social-search input { flex:1; min-width:0; }
+.profile-search-page .social-user-row { align-items:center; }
+.profile-search-page .social-user-row .button { margin-left:auto; }
+.profile-search-page .public-profile-card { margin-top:22px; }
+.public-profile-content { padding:12px 0 5px; text-align:center; }
+.public-profile-avatar { margin:0 auto 14px; }
+.public-profile-content h2 { margin:0; color:#f2e5ff; font-size:24px; overflow-wrap:anywhere; }
+.public-profile-caption { margin:9px 0 0; color:#9d91aa; font-size:12px; }
+@media(max-width:600px) {
+ .profile-search-page .social-search { flex-direction:column; }
+ .profile-search-page .social-user-row { flex-wrap:wrap; }
+}
