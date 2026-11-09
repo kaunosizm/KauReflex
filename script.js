@@ -274,6 +274,7 @@ function profileUI() {
   if ($("register-btn")) $("register-btn").hidden = loggedIn;
   if ($("logout-btn")) $("logout-btn").hidden = !loggedIn;
   if ($("profile-btn")) $("profile-btn").hidden = !loggedIn;
+  if ($("profile-search-nav-btn")) $("profile-search-nav-btn").hidden = !loggedIn;
   const isAdmin = !!currentUser && currentUser.id === ADMIN_USER_ID;
   if ($("nav-admin")) $("nav-admin").hidden = !isAdmin;
 
@@ -307,6 +308,7 @@ function showHome() {
   stopAim();
   stopCPS();
    $("social-page").hidden = true;
+  $("profile-search-page").hidden = true;
   $("admin-page").hidden = true;
 
   $("home-view").hidden = false;
@@ -326,6 +328,7 @@ function openProfile() {
   stopAim();
   stopCPS();
    $("social-page").hidden = true;
+  $("profile-search-page").hidden = true;
   $("admin-page").hidden = true;
   closeMenu();
 
@@ -2001,6 +2004,7 @@ function showAdminPage() {
   $("home-view").hidden = true;
   $("profile-page").hidden = true;
   $("social-page").hidden = true;
+  $("profile-search-page").hidden = true;
   $("admin-page").hidden = false;
   const adminPanel = $("admin-role-panel");
   if (adminPanel) adminPanel.hidden = false;
@@ -2023,6 +2027,7 @@ async function showFriends() {
   $("profile-page").hidden = true;
   $("admin-page").hidden = true;
   $("social-page").hidden = false;
+  $("profile-search-page").hidden = true;
 
   setActiveMenu("nav-friends");
   closeMenu();
@@ -2104,23 +2109,7 @@ async function searchFriends() {
       "@" + profile.username
     );
 
-    const actions = makeSocialElement("div", "profile-search-actions");
-
-    const profileButton = makeSocialElement(
-      "button",
-      "button button-outline",
-      "Profili Gör"
-    );
-    profileButton.type = "button";
-    profileButton.addEventListener("click", () => {
-      viewPublicProfile(profile.username);
-    });
-
-    const button = makeSocialElement(
-      "button",
-      "button button-primary",
-      "Arkadaş Ekle"
-    );
+    const button = makeSocialElement("button", "button button-primary", "Arkadaş Ekle");
 
     button.type = "button";
 
@@ -2143,8 +2132,45 @@ async function searchFriends() {
       await loadFriendships();
     });
 
-    actions.append(profileButton, button);
-    row.append(name, actions);
+    row.append(name, button);
+    results.append(row);
+  });
+}
+
+function showProfileSearchPage() {
+  if (!currentUser) { openDialog("login"); return; }
+  stopAim(); stopCPS();
+  $("home-view").hidden = true;
+  $("profile-page").hidden = true;
+  $("social-page").hidden = true;
+  $("admin-page").hidden = true;
+  $("profile-search-page").hidden = false;
+  $("public-profile-card").hidden = true;
+  closeMenu();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+async function searchPublicProfiles() {
+  if (!currentUser) { openDialog("login"); return; }
+  const query = $("profile-search-input").value.trim();
+  const results = $("profile-search-results");
+  if (query.length < 3) { results.textContent = "En az 3 karakter gir."; return; }
+  results.textContent = "Profiller aranıyor...";
+  const { data, error } = await supabase.rpc("search_profiles", { p_query: query });
+  if (error) {
+    console.error("Profil arama hatası:", error);
+    results.textContent = "Arama yapılamadı: " + error.message;
+    return;
+  }
+  results.replaceChildren();
+  if (!data || !data.length) { results.textContent = "Kullanıcı bulunamadı."; return; }
+  data.forEach(profile => {
+    const row = makeSocialElement("div", "social-user-row");
+    const name = makeSocialElement("strong", "social-username", "@" + profile.username);
+    const button = makeSocialElement("button", "button button-outline", "Profili Gör");
+    button.type = "button";
+    button.addEventListener("click", () => viewPublicProfile(profile.username));
+    row.append(name, button);
     results.append(row);
   });
 }
@@ -2153,46 +2179,25 @@ async function viewPublicProfile(targetUsername) {
   const card = $("public-profile-card");
   const usernameElement = $("public-profile-username");
   const roleElement = $("public-profile-role");
-
-  if (!currentUser) {
-    openDialog("login");
-    return;
-  }
-
   card.hidden = false;
   usernameElement.textContent = "@" + targetUsername;
   roleElement.hidden = true;
   roleElement.textContent = "";
-
-  const { data, error } = await supabase.rpc(
-    "get_public_profile",
-    { p_username: targetUsername }
-  );
-
+  const { data, error } = await supabase.rpc("get_public_profile", { p_username: targetUsername });
   if (error) {
     console.error("Profil görüntüleme hatası:", error);
     usernameElement.textContent = "Profil yüklenemedi";
-    socialMessage("Profil bilgileri alınamadı: " + error.message, true);
     return;
   }
-
   const profile = Array.isArray(data) ? data[0] : data;
-  if (!profile) {
-    usernameElement.textContent = "Kullanıcı bulunamadı";
-    return;
-  }
-
+  if (!profile) { usernameElement.textContent = "Kullanıcı bulunamadı"; return; }
   usernameElement.textContent = "@" + profile.username;
   const avatar = card.querySelector(".public-profile-avatar");
-  if (avatar) {
-    avatar.textContent = (profile.username || "K").charAt(0).toUpperCase();
-  }
-
+  if (avatar) avatar.textContent = (profile.username || "K").charAt(0).toUpperCase();
   if (profile.role_name) {
     roleElement.textContent = profile.role_name;
     roleElement.hidden = false;
   }
-
   card.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
@@ -2334,6 +2339,14 @@ $("friends-btn").addEventListener(
   "click",
   showFriends
 );
+
+$("profile-search-nav-btn").addEventListener("click", showProfileSearchPage);
+$("profile-search-back-btn").addEventListener("click", showHome);
+$("profile-search-btn").addEventListener("click", searchPublicProfiles);
+$("profile-search-input").addEventListener("keydown", event => {
+  if (event.key === "Enter") searchPublicProfiles();
+});
+
 
 $("social-back-btn").addEventListener(
   "click",
