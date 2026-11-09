@@ -54,6 +54,13 @@ let authMode = "login";
 let saving = false;
 let lastUnsavedResult = null;
 
+// CHAT
+let chatRealtimeChannel = null;
+let chatActiveType = "global";
+let chatActiveConversationId = null;
+let chatActiveUsername = "";
+let chatLoading = false;
+
 /* =========================================
    AIM LABORATUVARI
 ========================================= */
@@ -279,6 +286,7 @@ function profileUI() {
   if ($("logout-btn")) $("logout-btn").hidden = !loggedIn;
   if ($("profile-btn")) $("profile-btn").hidden = !loggedIn;
   if ($("profile-search-nav-btn")) $("profile-search-nav-btn").hidden = !loggedIn;
+  if ($("chat-btn")) $("chat-btn").hidden = !loggedIn;
   const isAdmin = !!currentUser && isAdminUser(currentUser);
   if ($("nav-admin")) $("nav-admin").hidden = !isAdmin;
 
@@ -313,6 +321,7 @@ function showHome() {
   stopCPS();
    $("social-page").hidden = true;
   $("profile-search-page").hidden = true;
+  $("chat-page").hidden = true;
   $("admin-page").hidden = true;
 
   $("home-view").hidden = false;
@@ -333,6 +342,7 @@ function openProfile() {
   stopCPS();
    $("social-page").hidden = true;
   $("profile-search-page").hidden = true;
+  $("chat-page").hidden = true;
   $("admin-page").hidden = true;
   closeMenu();
 
@@ -1584,6 +1594,7 @@ async function submitAuth() {
 ========================================= */
 
 async function logout() {
+  closeChatRealtime();
   const { error } = await supabase.auth.signOut();
 
   if (error) {
@@ -1932,6 +1943,8 @@ supabase.auth.onAuthStateChange(
       });
 
     } else {
+      closeChatRealtime();
+      if ($("chat-page") && !$("chat-page").hidden) showHome();
       username = "";
       history = [];
       best = null;
@@ -2000,6 +2013,7 @@ function showAdminPage() {
   $("social-page").hidden = true;
   $("profile-search-page").hidden = true;
   $("admin-page").hidden = false;
+  $("chat-page").hidden = true;
   const adminPanel = $("admin-role-panel");
   if (adminPanel) adminPanel.hidden = false;
 
@@ -2022,6 +2036,8 @@ async function showFriends() {
   $("admin-page").hidden = true;
   $("social-page").hidden = false;
   $("profile-search-page").hidden = true;
+  $("chat-page").hidden = true;
+  $("chat-page").hidden = true;
 
   setActiveMenu("nav-friends");
   closeMenu();
@@ -2139,6 +2155,7 @@ function showProfileSearchPage() {
   $("social-page").hidden = true;
   $("admin-page").hidden = true;
   $("profile-search-page").hidden = false;
+  $("chat-page").hidden = true;
   $("public-profile-card").hidden = true;
   closeMenu();
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -2319,12 +2336,239 @@ async function loadFriendships() {
   });
 }
 
+
+/* =========================================
+   KAUREFLEX CHAT — GENEL + ÖZEL MESAJLAR
+========================================= */
+
+function chatStatus(text, isError = false) {
+  const el = $("chat-status-message");
+  if (!el) return;
+  el.textContent = text || "";
+  el.style.color = isError ? "#ff8585" : "#b9a0d8";
+}
+
+function closeChatRealtime() {
+  if (chatRealtimeChannel) {
+    supabase.removeChannel(chatRealtimeChannel);
+    chatRealtimeChannel = null;
+  }
+}
+
+function chatRoomFilter() {
+  return chatActiveType === "global"
+    ? { event: "*", schema: "public", table: "chat_messages", filter: "room_type=eq.global" }
+    : { event: "*", schema: "public", table: "chat_messages", filter: "conversation_id=eq." + chatActiveConversationId };
+}
+
+function subscribeChatRealtime() {
+  closeChatRealtime();
+  const filter = chatRoomFilter();
+  chatRealtimeChannel = supabase
+    .channel("kaureflex-chat-" + chatActiveType + "-" + (chatActiveConversationId || "global"))
+    .on("postgres_changes", filter, payload => {
+      if (payload.eventType === "INSERT" || payload.eventType === "UPDATE") {
+        loadChatMessages();
+      }
+    })
+    .subscribe(status => {
+      const label = $("chat-connection-status");
+      if (!label) return;
+      label.textContent = status === "SUBSCRIBED" ? "● Canlı bağlantı" :
+        status === "CHANNEL_ERROR" ? "Bağlantı hatası" :
+        status === "TIMED_OUT" ? "Bağlantı zaman aşımı" : "Bağlanıyor...";
+      label.classList.toggle("connected", status === "SUBSCRIBED");
+      label.classList.toggle("disconnected", status === "CHANNEL_ERROR" || status === "TIMED_OUT");
+    });
+}
+
+async function loadChatMessages() {
+  if (!currentUser || chatLoading) return;
+  chatLoading = true;
+  const box = $("chat-messages");
+  try {
+    let query = supabase
+      .from("chat_messages")
+      .select("id, conversation_id, room_type, sender_id, body, created_at")
+      .order("created_at", { ascending: true })
+      .limit(100);
+
+    if (chatActiveType === "global") {
+      query = query.eq("room_type", "global");
+    } else {
+      query = query.eq("room_type", "private").eq("conversation_id", chatActiveConversationId);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    box.replaceChildren();
+
+    if (!data || !data.length) {
+      box.append(makeSocialElement("p", "chat-empty", "Henüz mesaj yok. İlk mesajı sen gönder!"));
+      return;
+    }
+
+    const senderIds = [...new Set(data.map(item => item.sender_id))];
+    const { data: profiles, error: profilesError } = await supabase
+      .from("profiles")
+      .select("id, username")
+      .in("id", senderIds);
+    if (profilesError) console.warn("Sohbet kullanıcı adları alınamadı:", profilesError.message);
+    const names = new Map((profiles || []).map(item => [item.id, item.username]));
+
+    data.forEach(item => {
+      const own = item.sender_id === currentUser.id;
+      const row = makeSocialElement("article", "chat-message" + (own ? " own" : ""));
+      const meta = makeSocialElement("div", "chat-message-meta");
+      meta.append(
+        makeSocialElement("strong", "", own ? "Sen" : "@" + (names.get(item.sender_id) || "Üye")),
+        makeSocialElement("time", "", new Date(item.created_at).toLocaleString("tr-TR", { day:"2-digit", month:"2-digit", hour:"2-digit", minute:"2-digit" }))
+      );
+      const body = makeSocialElement("p", "chat-message-body", item.body);
+      row.append(meta, body);
+      box.append(row);
+    });
+
+    box.scrollTop = box.scrollHeight;
+  } catch (error) {
+    console.error("Sohbet mesajları yüklenemedi:", error);
+    box.replaceChildren(makeSocialElement("p", "chat-empty", "Mesajlar yüklenemedi: " + error.message));
+    chatStatus("Sohbet tablosu hazır değil veya erişim izni yok. SQL kurulumunu tamamla.", true);
+  } finally {
+    chatLoading = false;
+  }
+}
+
+async function loadChatConversations() {
+  if (!currentUser) return;
+  const box = $("chat-conversation-list");
+  const { data, error } = await supabase.rpc("chat_list_conversations");
+  if (error) {
+    console.error("Özel sohbetler yüklenemedi:", error);
+    box.replaceChildren(makeSocialElement("p", "social-empty", "Özel sohbet listesi yüklenemedi."));
+    return;
+  }
+  box.replaceChildren();
+  if (!data || !data.length) {
+    box.append(makeSocialElement("p", "social-empty", "Henüz özel sohbetin yok."));
+    return;
+  }
+  data.forEach(item => {
+    const button = makeSocialElement("button", "chat-conversation-button" +
+      (chatActiveType === "private" && chatActiveConversationId === item.conversation_id ? " active" : ""));
+    button.type = "button";
+    button.append(
+      makeSocialElement("strong", "", "@" + item.other_username),
+      makeSocialElement("small", "", item.last_message || "Sohbete başla")
+    );
+    button.addEventListener("click", () => openPrivateChat(item.conversation_id, item.other_username));
+    box.append(button);
+  });
+}
+
+async function selectChatRoom(type, conversationId = null, otherUsername = "") {
+  chatActiveType = type;
+  chatActiveConversationId = conversationId;
+  chatActiveUsername = otherUsername;
+  $("chat-global-btn").classList.toggle("active", type === "global");
+  $("chat-room-title").textContent = type === "global" ? "🌐 Genel Sohbet" : "@" + otherUsername;
+  $("chat-room-subtitle").textContent = type === "global" ? "KauReflex üyeleriyle konuş" : "Özel mesajlaşma";
+  $("chat-message-input").placeholder = type === "global" ? "Herkese mesaj yaz..." : "@" + otherUsername + " kullanıcısına mesaj yaz...";
+  await loadChatMessages();
+  subscribeChatRealtime();
+  await loadChatConversations();
+}
+
+async function openPrivateChat(conversationId, otherUsername) {
+  await selectChatRoom("private", conversationId, otherUsername);
+}
+
+async function startPrivateChat() {
+  if (!currentUser) { openDialog("login"); return; }
+  const target = $("chat-username-input").value.trim();
+  if (target.length < 3) {
+    chatStatus("En az 3 karakterlik bir kullanıcı adı gir.", true);
+    return;
+  }
+  const button = $("chat-open-dm-btn");
+  button.disabled = true;
+  const { data, error } = await supabase.rpc("chat_get_or_create_dm", { p_username: target });
+  button.disabled = false;
+  if (error) {
+    console.error("Özel sohbet açılamadı:", error);
+    chatStatus(error.message || "Özel sohbet açılamadı.", true);
+    return;
+  }
+  const result = Array.isArray(data) ? data[0] : data;
+  if (!result || !result.conversation_id) {
+    chatStatus("Kullanıcı bulunamadı.", true);
+    return;
+  }
+  $("chat-username-input").value = "";
+  chatStatus("Özel sohbet hazır.");
+  await openPrivateChat(result.conversation_id, result.other_username || target);
+}
+
+async function sendChatMessage(event) {
+  event.preventDefault();
+  if (!currentUser) { openDialog("login"); return; }
+  const input = $("chat-message-input");
+  const body = input.value.trim();
+  if (!body) return;
+  const payload = {
+    room_type: chatActiveType,
+    conversation_id: chatActiveType === "private" ? chatActiveConversationId : null,
+    sender_id: currentUser.id,
+    body
+  };
+  const button = $("chat-send-btn");
+  button.disabled = true;
+  const { error } = await supabase.from("chat_messages").insert(payload);
+  button.disabled = false;
+  if (error) {
+    console.error("Mesaj gönderilemedi:", error);
+    chatStatus("Mesaj gönderilemedi: " + error.message, true);
+    return;
+  }
+  input.value = "";
+  chatStatus("Mesaj gönderildi.");
+  await loadChatMessages();
+  if (chatActiveType === "private") await loadChatConversations();
+}
+
+async function showChatPage() {
+  if (!currentUser) { openDialog("login"); return; }
+  stopAim();
+  stopCPS();
+  $("home-view").hidden = true;
+  $("profile-page").hidden = true;
+  $("social-page").hidden = true;
+  $("profile-search-page").hidden = true;
+  $("admin-page").hidden = true;
+  $("chat-page").hidden = false;
+  setActiveMenu("nav-chat");
+  closeMenu();
+  chatStatus("");
+  await selectChatRoom("global");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
 /* V5 BUTONLARI */
 
 $("nav-friends").addEventListener(
   "click",
   showFriends
 );
+
+$("nav-chat").addEventListener("click", showChatPage);
+$("chat-btn").addEventListener("click", showChatPage);
+$("chat-back-btn").addEventListener("click", showHome);
+$("chat-global-btn").addEventListener("click", () => selectChatRoom("global"));
+$("chat-open-dm-btn").addEventListener("click", startPrivateChat);
+$("chat-username-input").addEventListener("keydown", event => {
+  if (event.key === "Enter") startPrivateChat();
+});
+$("chat-send-form").addEventListener("submit", sendChatMessage);
 
 $("nav-admin").addEventListener("click", showAdminPage);
 $("admin-back-btn").addEventListener("click", showHome);
