@@ -117,11 +117,15 @@
         Profilim
       </button>
 
-      <button class="button button-ghost" id="logout-btn" hidden>
-        Çıkış
-      </button>
     </nav>
   </header>
+
+  <nav id="mobile-bottom-nav" class="mobile-bottom-nav" aria-label="Hızlı gezinme" hidden>
+    <button class="mobile-nav-item active" id="mobile-nav-home" type="button"><span>⌂</span><small>Ana Sayfa</small></button>
+    <button class="mobile-nav-item" id="mobile-nav-friends" type="button"><span>♧</span><small>Arkadaşlar</small></button>
+    <button class="mobile-nav-item" id="mobile-nav-chat" type="button"><span>✉</span><small>Sohbet</small></button>
+    <button class="mobile-nav-item" id="mobile-nav-profile" type="button"><span>♙</span><small>Profilim</small></button>
+  </nav>
 
   <main class="page">
 
@@ -507,8 +511,8 @@
 
 
       <div class="profile-actions">
-        <button id="profile-logout-btn" class="button button-ghost">
-          Çıkış Yap
+        <button id="profile-logout-btn" class="button button-ghost" type="button">
+          <span aria-hidden="true">↪</span> Çıkış Yap
         </button>
       </div>
 
@@ -615,6 +619,10 @@
           <h2 id="public-profile-username">@kullanıcı</h2>
           <p id="public-profile-role" class="profile-role" hidden></p>
           <p class="public-profile-caption">KauReflex üyesi</p>
+          <div class="public-profile-friend-actions">
+            <button id="public-profile-friend-btn" class="button button-primary" type="button">Arkadaş Ekle</button>
+            <p id="public-profile-friend-status" class="status-message" aria-live="polite"></p>
+          </div>
         </div>
       </section>
     </section>
@@ -769,6 +777,18 @@
     </button>
 
   </dialog>
+
+  <div id="logout-confirm-overlay" class="logout-confirm-overlay" hidden>
+    <section class="logout-confirm-card" role="dialog" aria-modal="true" aria-labelledby="logout-confirm-title">
+      <div class="logout-confirm-icon">↪</div>
+      <h3 id="logout-confirm-title">Çıkış Yap?</h3>
+      <p>Hesabından çıkış yapmak istediğine emin misin?</p>
+      <div class="logout-confirm-actions">
+        <button id="logout-cancel-btn" class="button button-outline" type="button">Vazgeç</button>
+        <button id="logout-confirm-btn" class="button button-primary" type="button">Çıkış Yap</button>
+      </div>
+    </section>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="script.js?v=20261109-chat-v1"></script>
