@@ -1672,3 +1672,21 @@ footer{
   .admin-role-actions { flex-direction: column; }
   .admin-role-actions .button { width: 100%; }
 }
+
+
+/* =========================================
+   KAUREFLEX ADMIN SAYFASI
+========================================= */
+.admin-page {
+  width: 100%;
+  min-height: 65vh;
+  padding: 35px 0 55px;
+}
+.admin-page > .section-heading {
+  align-items: center;
+  margin-bottom: 22px;
+}
+.admin-page .admin-role-panel {
+  max-width: 680px;
+  margin: 0 auto;
+}
