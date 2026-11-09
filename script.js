@@ -43,8 +43,11 @@ let startedAt = 0;
 let currentUser = null;
 let username = "";
 let profileRoleName = "";
-const ADMIN_USER_IDS = ["b5e7f163-c645-4b69-a330-644c4e0ec81f", "852172f9-19ca-4b74-9ba3-f88eb5151d1a"];
-const isAdminUser = user => !!user && ADMIN_USER_IDS.includes(user.id);
+const ADMIN_USER_IDS = new Set([
+  "b5e7f163-c645-4b69-a330-644c4e0ec81f",
+  "852172f9-19ca-4b74-9ba3-f88eb5151d1a"
+].map(id => id.trim().toLowerCase()));
+const isAdminUser = user => ADMIN_USER_IDS.has(String(user?.id || "").trim().toLowerCase());
 let best = null;
 let history = [];
 let authMode = "login";
