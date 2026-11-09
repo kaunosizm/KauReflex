@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#080611">
   <meta name="description" content="KauReflex ile refleksini ölç, Aim Laboratuvarı'nda nişan alma hızını ve CPS Ölçer ile tıklama hızını geliştir.">
   <title>KauReflex — Refleks ve Aim Merkezi</title>
-  <link rel="stylesheet" href="style.css?v=20261109-admin-uid-refresh">
+  <link rel="stylesheet" href="style.css?v=20261109-chat-v1">
 </head>
 <body>
   <div class="ambient ambient-one"></div>
@@ -58,6 +58,12 @@
       <span class="menu-new">V5</span>
     </button>
 
+    <button class="menu-link" id="nav-chat" type="button">
+      <span class="menu-icon">✉</span>
+      <span>Sohbet</span>
+      <span class="menu-new">YENİ</span>
+    </button>
+
     <button class="menu-link" id="nav-admin" type="button" hidden>
       <span class="menu-icon">♛</span>
       <span>Admin Paneli</span>
@@ -101,6 +107,10 @@
 
       <button class="button button-ghost" id="friends-btn" hidden>
         ♧ Arkadaşlar
+      </button>
+
+      <button class="button button-ghost" id="chat-btn" hidden>
+        ✉ Sohbet
       </button>
 
       <button class="button button-ghost" id="profile-btn" hidden>
@@ -609,6 +619,54 @@
       </section>
     </section>
 
+    <!-- KAUREFLEX SOHBET -->
+    <section id="chat-page" class="chat-page" hidden>
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">KAUREFLEX COMMUNITY</p>
+          <h3>Sohbet Merkezi</h3>
+          <p class="intro">Genel sohbete katıl veya arkadaşlarınla özel konuş.</p>
+        </div>
+        <button id="chat-back-btn" class="button button-outline" type="button">← Ana Sayfa</button>
+      </div>
+
+      <div class="chat-layout">
+        <aside class="chat-sidebar">
+          <button id="chat-global-btn" class="chat-room-button active" type="button">
+            <span>🌐</span><span><strong>Genel Sohbet</strong><small>Herkesle konuş</small></span>
+          </button>
+          <div class="chat-private-heading">
+            <strong>Özel Mesajlar</strong>
+          </div>
+          <div class="chat-new-dm">
+            <input id="chat-username-input" type="text" maxlength="24" placeholder="Kullanıcı adı..." autocomplete="off">
+            <button id="chat-open-dm-btn" class="button button-primary" type="button">Sohbet Aç</button>
+          </div>
+          <div id="chat-conversation-list" class="chat-conversation-list">
+            <p class="social-empty">Özel sohbetlerin burada görünecek.</p>
+          </div>
+        </aside>
+
+        <section class="chat-window">
+          <div class="chat-window-heading">
+            <div>
+              <strong id="chat-room-title">🌐 Genel Sohbet</strong>
+              <small id="chat-room-subtitle">KauReflex üyeleriyle konuş</small>
+            </div>
+            <span id="chat-connection-status" class="chat-connection-status">Bağlanıyor...</span>
+          </div>
+          <div id="chat-messages" class="chat-messages" aria-live="polite">
+            <p class="social-empty">Mesajlar yükleniyor...</p>
+          </div>
+          <form id="chat-send-form" class="chat-send-form">
+            <input id="chat-message-input" type="text" maxlength="1000" placeholder="Mesajını yaz..." autocomplete="off" required>
+            <button id="chat-send-btn" class="button button-primary" type="submit">Gönder</button>
+          </form>
+          <p id="chat-status-message" class="chat-status-message" role="status" aria-live="polite"></p>
+        </section>
+      </div>
+    </section>
+
     <!-- YÖNETİCİ PANELİ -->
     <section id="admin-page" class="admin-page" hidden>
       <div class="section-heading">
@@ -713,7 +771,7 @@
   </dialog>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="script.js?v=20261109-admin-uid-refresh"></script>
+  <script src="script.js?v=20261109-chat-v1"></script>
 
 </body>
 </html>
