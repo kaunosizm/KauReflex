@@ -1621,21 +1621,6 @@ async function saveUserRole(clearRole = false) {
         p_username: targetUsername
       });
 
-    if (lookupError) throw lookupError;
-
-    if (!matches || matches.length === 0) {
-      throw new Error("Bu kullanıcı adıyla bir profil bulunamadı.");
-    }
-
-    if (matches.length > 1) {
-      throw new Error("Birden fazla kullanıcı bulundu.");
-    }
-
-    const targetProfile = {
-      id: matches[0].user_id,
-      username: matches[0].username
-    };
-
     const { error: roleError } = await supabase.rpc(
       "set_user_role",
       {
