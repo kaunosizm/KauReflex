@@ -1860,3 +1860,10 @@ footer{
   .mobile-nav-item.active span { text-shadow:0 0 12px rgba(184,92,255,.55); }
   .page { padding-bottom:12px; }
 }
+
+
+/* Gizli katmanlar, özel display kurallarına rağmen görünmesin */
+.logout-confirm-overlay[hidden],
+.mobile-bottom-nav[hidden] {
+  display: none !important;
+}
