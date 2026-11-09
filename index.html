@@ -58,6 +58,11 @@
       <span class="menu-new">V5</span>
     </button>
 
+    <button class="menu-link" id="nav-admin" type="button" hidden>
+      <span class="menu-icon">♛</span>
+      <span>Admin Paneli</span>
+    </button>
+
     <div class="side-menu-footer">
       <span>KAUREFLEX</span>
       <small>REFLEX TRAINING PLATFORM</small>
@@ -485,30 +490,7 @@
 
       <p id="profile-note" class="status-message"></p>
 
-      <!-- Yalnızca site yöneticisinin görebildiği rol yönetimi -->
-      <section id="admin-role-panel" class="admin-role-panel" hidden>
-        <p class="eyebrow">YÖNETİCİ ARAÇLARI</p>
-        <h3>Kullanıcı Rolü Ata</h3>
-        <p class="admin-role-copy">Kullanıcı adını ve profilinde görünecek rolü gir.</p>
 
-        <label for="admin-role-username">Kullanıcı adı</label>
-        <input id="admin-role-username" type="text" maxlength="30"
-          placeholder="Örn. kaunosizm" autocomplete="off">
-
-        <label for="admin-role-name">Rol adı</label>
-        <input id="admin-role-name" type="text" maxlength="32"
-          placeholder="Örn. Efsane Oyuncu" autocomplete="off">
-
-        <div class="admin-role-actions">
-          <button id="admin-role-save-btn" class="button button-primary" type="button">
-            Rolü Kaydet
-          </button>
-          <button id="admin-role-clear-btn" class="button button-outline" type="button">
-            Rolü Kaldır
-          </button>
-        </div>
-        <p id="admin-role-message" class="admin-role-message" aria-live="polite"></p>
-      </section>
 
       <div class="profile-actions">
         <button id="profile-logout-btn" class="button button-ghost">
@@ -701,6 +683,45 @@
 
       </section>
 
+    </section>
+
+    <!-- YÖNETİCİ PANELİ -->
+    <section id="admin-page" class="admin-page" hidden>
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">KAUREFLEX MANAGEMENT</p>
+          <h3>Admin Paneli</h3>
+          <p class="intro">Kullanıcı rollerini buradan yönetebilirsin.</p>
+        </div>
+        <button id="admin-back-btn" class="button button-outline" type="button">
+          ← Ana Sayfa
+        </button>
+      </div>
+
+      <!-- Yalnızca site yöneticisinin görebildiği rol yönetimi -->
+      <section id="admin-role-panel" class="admin-role-panel" hidden>
+        <p class="eyebrow">YÖNETİCİ ARAÇLARI</p>
+        <h3>Kullanıcı Rolü Ata</h3>
+        <p class="admin-role-copy">Kullanıcı adını ve profilinde görünecek rolü gir.</p>
+
+        <label for="admin-role-username">Kullanıcı adı</label>
+        <input id="admin-role-username" type="text" maxlength="30"
+          placeholder="Örn. kaunosizm" autocomplete="off">
+
+        <label for="admin-role-name">Rol adı</label>
+        <input id="admin-role-name" type="text" maxlength="32"
+          placeholder="Örn. Efsane Oyuncu" autocomplete="off">
+
+        <div class="admin-role-actions">
+          <button id="admin-role-save-btn" class="button button-primary" type="button">
+            Rolü Kaydet
+          </button>
+          <button id="admin-role-clear-btn" class="button button-outline" type="button">
+            Rolü Kaldır
+          </button>
+        </div>
+        <p id="admin-role-message" class="admin-role-message" aria-live="polite"></p>
+      </section>
     </section>
 
     <footer>
