@@ -1810,3 +1810,53 @@ footer{
  .chat-send-form{padding:10px}
  .chat-send-form .button{padding:10px 11px}
 }
+
+
+/* MOBİL GEZİNME VE HESAP DÜZENİ */
+.mobile-bottom-nav { display:none; }
+.public-profile-friend-actions { display:flex; flex-direction:column; align-items:center; gap:6px; margin-top:20px; }
+.public-profile-friend-actions .button { min-width:170px; }
+.public-profile-friend-actions .status-message { margin:0; min-height:16px; text-align:center; }
+.logout-confirm-overlay {
+  position:fixed; inset:0; z-index:3000; display:grid; place-items:center;
+  padding:20px; background:rgba(4,2,10,.78); backdrop-filter:blur(8px);
+}
+.logout-confirm-card {
+  width:min(100%,360px); padding:26px; text-align:center; border-radius:20px;
+  border:1px solid rgba(184,92,255,.3); background:#171022;
+  box-shadow:0 24px 80px rgba(0,0,0,.5);
+}
+.logout-confirm-icon {
+  width:48px; height:48px; margin:0 auto 13px; display:grid; place-items:center;
+  border-radius:15px; color:#d9b2ff; background:rgba(184,92,255,.13); font-size:24px;
+}
+.logout-confirm-card h3 { margin:0 0 8px; font-size:21px; }
+.logout-confirm-card p { margin:0; color:#aaa0bc; font-size:13px; line-height:1.5; }
+.logout-confirm-actions { display:flex; gap:10px; margin-top:22px; }
+.logout-confirm-actions .button { flex:1; }
+@media(max-width:600px) {
+  body { padding-bottom:78px; }
+  .topbar { min-height:62px; }
+  .account-actions #profile-search-nav-btn,
+  .account-actions #friends-btn,
+  .account-actions #chat-btn,
+  .account-actions #profile-btn { display:none !important; }
+  .account-actions { gap:4px; }
+  .account-actions .button { padding:9px 11px; }
+  .mobile-bottom-nav {
+    position:fixed; z-index:1000; left:0; right:0; bottom:0;
+    display:flex; justify-content:space-around; align-items:center;
+    min-height:68px; padding:7px 8px calc(7px + env(safe-area-inset-bottom));
+    border-top:1px solid rgba(190,130,255,.18);
+    background:rgba(12,8,22,.96); backdrop-filter:blur(16px);
+  }
+  .mobile-nav-item {
+    flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:3px; padding:5px 2px; border:0; border-radius:12px; color:#8f849e; background:transparent;
+  }
+  .mobile-nav-item span { font-size:21px; line-height:1.1; }
+  .mobile-nav-item small { font-size:10px; font-weight:600; }
+  .mobile-nav-item.active { color:#d8aaff; background:rgba(184,92,255,.12); }
+  .mobile-nav-item.active span { text-shadow:0 0 12px rgba(184,92,255,.55); }
+  .page { padding-bottom:12px; }
+}
