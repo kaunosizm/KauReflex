@@ -1424,6 +1424,7 @@ async function loadCloudData() {
     renderHistory();
     renderProfile();
     profileUI();
+    await loadAdminProfileStyle();
     stats();
 
   } catch (error) {
@@ -2253,6 +2254,116 @@ async function searchPublicProfiles() {
   });
 }
 
+const DEFAULT_ADMIN_PROFILE_STYLE = {
+  name_color: "#ffd36b",
+  card_color: "#1b142c",
+  accent_color: "#d99a25",
+  avatar_color: "#075c32"
+};
+let adminProfileStyle = { ...DEFAULT_ADMIN_PROFILE_STYLE };
+
+function normalizeHexColor(value, fallback) {
+  return /^#[0-9a-f]{6}$/i.test(String(value || "")) ? value : fallback;
+}
+
+function applyAdminProfileStyle(container, style = adminProfileStyle) {
+  if (!container) return;
+  const name = container.querySelector("#profile-username, #public-profile-username");
+  const avatar = container.querySelector(".profile-avatar, .public-profile-avatar");
+  container.style.setProperty("--admin-card-color", normalizeHexColor(style.card_color, DEFAULT_ADMIN_PROFILE_STYLE.card_color));
+  container.style.setProperty("--admin-accent-color", normalizeHexColor(style.accent_color, DEFAULT_ADMIN_PROFILE_STYLE.accent_color));
+  if (name) {
+    name.style.color = normalizeHexColor(style.name_color, DEFAULT_ADMIN_PROFILE_STYLE.name_color);
+    name.style.background = "none";
+    name.style.webkitTextFillColor = "currentColor";
+    name.style.textShadow = "0 0 18px " + normalizeHexColor(style.name_color, DEFAULT_ADMIN_PROFILE_STYLE.name_color) + "55";
+  }
+  if (avatar) {
+    avatar.style.background = normalizeHexColor(style.avatar_color, DEFAULT_ADMIN_PROFILE_STYLE.avatar_color);
+    avatar.style.borderColor = normalizeHexColor(style.accent_color, DEFAULT_ADMIN_PROFILE_STYLE.accent_color);
+  }
+}
+
+async function loadAdminProfileStyle() {
+  if (!currentUser || !isAdminUser(currentUser)) return;
+  const { data, error } = await supabase.from("admin_profile_styles")
+    .select("name_color,card_color,accent_color,avatar_color")
+    .eq("user_id", currentUser.id).maybeSingle();
+  if (error) {
+    console.warn("Admin profil tasarımı yüklenemedi:", error.message);
+    return;
+  }
+  adminProfileStyle = { ...DEFAULT_ADMIN_PROFILE_STYLE, ...(data || {}) };
+  applyAdminProfileStyle(document.querySelector(".profile-card"));
+  syncAdminStyleControls();
+}
+
+function syncAdminStyleControls() {
+  const map = {
+    "admin-style-name": "name_color",
+    "admin-style-card": "card_color",
+    "admin-style-accent": "accent_color",
+    "admin-style-avatar": "avatar_color"
+  };
+  Object.entries(map).forEach(([id, key]) => {
+    const input = $(id);
+    if (input) input.value = normalizeHexColor(adminProfileStyle[key], DEFAULT_ADMIN_PROFILE_STYLE[key]);
+  });
+  updateAdminStylePreview();
+}
+
+function updateAdminStylePreview() {
+  const style = {
+    name_color: $("admin-style-name")?.value || DEFAULT_ADMIN_PROFILE_STYLE.name_color,
+    card_color: $("admin-style-card")?.value || DEFAULT_ADMIN_PROFILE_STYLE.card_color,
+    accent_color: $("admin-style-accent")?.value || DEFAULT_ADMIN_PROFILE_STYLE.accent_color,
+    avatar_color: $("admin-style-avatar")?.value || DEFAULT_ADMIN_PROFILE_STYLE.avatar_color
+  };
+  const preview = $("admin-style-preview");
+  const previewName = $("admin-style-preview-name");
+  const previewAvatar = $("admin-style-preview-avatar");
+  if (preview) {
+    preview.style.background = style.card_color;
+    preview.style.borderColor = style.accent_color;
+  }
+  if (previewName) previewName.style.color = style.name_color;
+  if (previewAvatar) {
+    previewAvatar.style.background = style.avatar_color;
+    previewAvatar.style.borderColor = style.accent_color;
+  }
+}
+
+async function saveAdminProfileStyle(reset = false) {
+  if (!currentUser || !isAdminUser(currentUser)) return;
+  const style = reset ? { ...DEFAULT_ADMIN_PROFILE_STYLE } : {
+    name_color: $("admin-style-name").value,
+    card_color: $("admin-style-card").value,
+    accent_color: $("admin-style-accent").value,
+    avatar_color: $("admin-style-avatar").value
+  };
+  const button = $("admin-style-save-btn");
+  if (button) button.disabled = true;
+  setText("admin-style-message", "Kaydediliyor...");
+  try {
+    const { error } = await supabase.from("admin_profile_styles").upsert({
+      user_id: currentUser.id,
+      username: username || currentUser.user_metadata?.username || "admin",
+      ...style,
+      updated_at: new Date().toISOString()
+    }, { onConflict: "user_id" });
+    if (error) throw error;
+    adminProfileStyle = style;
+    applyAdminProfileStyle(document.querySelector(".profile-card"));
+    setText("admin-style-message", "Profil renklerin kaydedildi ve herkese açıklandı.");
+    syncAdminStyleControls();
+  } catch (error) {
+    console.error("Admin profil tasarımı kaydedilemedi:", error);
+    setText("admin-style-message", "Kaydetme hatası: " + error.message);
+  } finally {
+    if (button) button.disabled = false;
+  }
+}
+
 async function viewPublicProfile(targetUsername) {
   const card = $("public-profile-card");
   const usernameElement = $("public-profile-username");
@@ -2270,6 +2381,16 @@ async function viewPublicProfile(targetUsername) {
   const profile = Array.isArray(data) ? data[0] : data;
   if (!profile) { usernameElement.textContent = "Kullanıcı bulunamadı"; return; }
   usernameElement.textContent = "@" + profile.username;
+  const { data: publicStyle, error: publicStyleError } = await supabase
+    .from("admin_profile_styles")
+    .select("name_color,card_color,accent_color,avatar_color")
+    .eq("username", profile.username)
+    .maybeSingle();
+  if (!publicStyleError && publicStyle) {
+    applyAdminProfileStyle(card, { ...DEFAULT_ADMIN_PROFILE_STYLE, ...publicStyle });
+  } else {
+    applyAdminProfileStyle(card, DEFAULT_ADMIN_PROFILE_STYLE);
+  }
   usernameElement.classList.toggle(
     "admin-gold-name",
     String(profile.username || "").trim().toLowerCase() === "admin"
@@ -2757,6 +2878,12 @@ $("friend-search-input").addEventListener(
     }
   }
 );
+
+["admin-style-name","admin-style-card","admin-style-accent","admin-style-avatar"].forEach(id => {
+  $(id)?.addEventListener("input", updateAdminStylePreview);
+});
+$("admin-style-save-btn")?.addEventListener("click", () => saveAdminProfileStyle(false));
+$("admin-style-reset-btn")?.addEventListener("click", () => saveAdminProfileStyle(true));
 
 initialize();
 
