@@ -207,7 +207,19 @@ function renderProfile() {
     currentUser.user_metadata?.username ||
     "Kullanıcı";
 
-  setText("profile-username", displayName);
+  const adminAccount = isAdminUser(currentUser);
+  const profileNameElement = $("profile-username");
+  if (profileNameElement) {
+    profileNameElement.textContent = displayName;
+    profileNameElement.classList.toggle("admin-gold-name", adminAccount);
+  }
+  if (adminAccount) {
+    setText("profile-level", "SEVİYE ∞");
+    setText("profile-xp", "SINIRSIZ XP");
+    const xpFill = $("profile-xp-fill");
+    if (xpFill) xpFill.style.width = "100%";
+    setText("profile-xp-next", "KAUREFLEX YÖNETİCİSİ");
+  }
   setText("profile-email", maskEmail(currentUser.email));
   setText("profile-joined", formatDate(currentUser.created_at));
 
@@ -498,7 +510,7 @@ const LEADERBOARD_CONFIG = {
 function renderLeaderboard(kind,rows,error){
  const box=$(LEADERBOARD_CONFIG[kind].element); if(!box)return; box.replaceChildren();
  if(error||!rows?.length){const p=document.createElement("p");p.className="leaderboard-empty";p.textContent=error?"Sıralama yüklenemedi.":"Henüz kayıtlı skor yok. İlk 100'e giren sen ol!";box.append(p);if(error)console.warn("Top100:",error);return;}
- rows.forEach((entry,i)=>{const row=document.createElement("div");row.className="leaderboard-row"+(i<3?" podium podium-"+(i+1):"");const rank=document.createElement("span");rank.className="leaderboard-rank";rank.textContent=(entry.rank_no||i+1)+".";const name=document.createElement("strong");name.className="leaderboard-name";name.textContent="@"+(entry.username||"Üye");const score=document.createElement("span");score.className="leaderboard-score";score.textContent=LEADERBOARD_CONFIG[kind].format(entry.score);row.append(rank,name,score);box.append(row);});
+ rows.forEach((entry,i)=>{const row=document.createElement("div");row.className="leaderboard-row"+(i<3?" podium podium-"+(i+1):"");const rank=document.createElement("span");rank.className="leaderboard-rank";rank.textContent=(entry.rank_no||i+1)+".";const name=document.createElement("strong");name.className="leaderboard-name";if(String(entry.username||"").trim().toLowerCase()==="admin")name.classList.add("admin-gold-name");name.textContent="@"+(entry.username||"Üye");const score=document.createElement("span");score.className="leaderboard-score";score.textContent=LEADERBOARD_CONFIG[kind].format(entry.score);row.append(rank,name,score);box.append(row);});
 }
 async function loadTop100(kind=null){
  const keys=kind?[kind]:Object.keys(LEADERBOARD_CONFIG);
@@ -2258,6 +2270,10 @@ async function viewPublicProfile(targetUsername) {
   const profile = Array.isArray(data) ? data[0] : data;
   if (!profile) { usernameElement.textContent = "Kullanıcı bulunamadı"; return; }
   usernameElement.textContent = "@" + profile.username;
+  usernameElement.classList.toggle(
+    "admin-gold-name",
+    String(profile.username || "").trim().toLowerCase() === "admin"
+  );
   const avatar = card.querySelector(".public-profile-avatar");
   if (avatar) avatar.textContent = (profile.username || "K").charAt(0).toUpperCase();
   if (profile.role_name) {
