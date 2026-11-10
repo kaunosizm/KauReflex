@@ -1878,3 +1878,7 @@ footer{
 .leaderboard-row.podium-1{border-color:rgba(255,204,77,.35);background:rgba(255,190,55,.07)}.leaderboard-row.podium-1 .leaderboard-rank{color:#ffd36b}.leaderboard-row.podium-2 .leaderboard-rank{color:#d6dce8}.leaderboard-row.podium-3 .leaderboard-rank{color:#d99b72}
 .leaderboard-empty{margin:0;padding:22px 12px;text-align:center;color:#9f92ae;font-size:13px}
 @media(max-width:600px){.leaderboard-section{padding:16px;margin:22px 0 32px}.leaderboard-section .section-heading h3{font-size:17px}.leaderboard-row{grid-template-columns:32px minmax(0,1fr) auto;gap:8px;padding:9px}.leaderboard-name,.leaderboard-score{font-size:12px}}
+
+
+/* YÖNETİCİ HESABI — ALTIN KULLANICI ADI */
+.admin-gold-name{color:#ffd36b!important;background:linear-gradient(90deg,#fff0a6 0%,#ffd36b 42%,#d99a25 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;text-shadow:0 0 18px rgba(255,190,55,.22)}
