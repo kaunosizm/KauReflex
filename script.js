@@ -2268,11 +2268,13 @@ function normalizeHexColor(value, fallback) {
 
 function applyAdminProfileStyle(container, style = adminProfileStyle) {
   if (!container) return;
+  container.classList.add("admin-custom-profile-style");
   const name = container.querySelector("#profile-username, #public-profile-username");
   const avatar = container.querySelector(".profile-avatar, .public-profile-avatar");
   container.style.setProperty("--admin-card-color", normalizeHexColor(style.card_color, DEFAULT_ADMIN_PROFILE_STYLE.card_color));
   container.style.setProperty("--admin-accent-color", normalizeHexColor(style.accent_color, DEFAULT_ADMIN_PROFILE_STYLE.accent_color));
   if (name) {
+    name.classList.remove("admin-gold-name");
     name.style.color = normalizeHexColor(style.name_color, DEFAULT_ADMIN_PROFILE_STYLE.name_color);
     name.style.background = "none";
     name.style.webkitTextFillColor = "currentColor";
